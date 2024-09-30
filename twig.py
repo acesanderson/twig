@@ -42,13 +42,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Twig: A lightweight command line interface for Chain framework.")
     parser.add_argument("query", type=str, nargs="?", help="Query string to be executed.")
     parser.add_argument("-m", "--model", type=str, help="Model file to be used.")
-    parser.add_argument("-l", "--list", action="store_true", help="List all available models.")
+    parser.add_argument("-li", "--list", action="store_true", help="List all available models.")
+    parser.add_argument("-o", "--ollama", action="store_true", help="Use llama3.1 locally.")
+    # parser.add_argument("-l", "--last", action="store_true", help="Return the last output.")
+    # parser.add_argument("-hi", "--history", action="store_true", help="Access the history.")
+    # parser.add_argument("-c", "--chat", action="store_true", help="Start a chat with this exchange.")
     args = parser.parse_args()
     if args.list:
         console.print(Chain.models)
         sys.exit()
     if args.model:
         model = Model(args.model)
+    elif args.ollama:
+        model = Model("llama3.1:latest")
     else:
         model = Model("gpt")
     if args.query:
