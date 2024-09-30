@@ -37,7 +37,7 @@ if __name__ == "__main__":
         # We add this as context to the query
         context = f"\n<context>\n{context}</context>"
     else:
-        context = None
+        context = ""
     # Capture arguments
     parser = argparse.ArgumentParser(description="Twig: A lightweight command line interface for Chain framework.")
     parser.add_argument("query", type=str, nargs="?", help="Query string to be executed.")
