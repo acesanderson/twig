@@ -8,6 +8,7 @@ console = Console(width=80) # for spinner
 
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
 with console.status(f'[bold green]Loading...[/bold green]', spinner="dots"):
+    from rich.markdown import Markdown          # for markdown output
     from Chain import Model, Chain              # for querying models
     import argparse                             # for command line arguments
     import sys                                  # to capture stdin, and sys.exit
@@ -18,6 +19,16 @@ def query(model, query):
     chain = Chain(model)
     response = chain.run(query)
     return response
+
+def print_markdown(markdown_string: str):
+	"""
+	Prints formatted markdown to the console.
+	"""
+	# Create a Markdown object
+	border = "-" * 80
+	markdown_string = f"{border}\n{markdown_string}\n\n{border}"
+	md = Markdown(markdown_string)
+	console.print(md)
 
 if __name__ == "__main__":
     # Capture stdin if it's being piped into script
@@ -43,6 +54,6 @@ if __name__ == "__main__":
     if args.query:
         with console.status(f'[bold green]Querying...[/bold green]', spinner="dots"):
             response = model.query(args.query + context, verbose=False)
-            console.print(response)
+            print_markdown(response)
 
 
