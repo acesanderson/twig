@@ -44,6 +44,7 @@ if __name__ == "__main__":
     parser.add_argument("-m", "--model", type=str, help="Model file to be used.")
     parser.add_argument("-li", "--list", action="store_true", help="List all available models.")
     parser.add_argument("-o", "--ollama", action="store_true", help="Use llama3.1 locally.")
+    # parser.add_argument("-r", "--raw", action="store_true", help="Print raw output (not markdown).")
     # parser.add_argument("-l", "--last", action="store_true", help="Return the last output.")
     # parser.add_argument("-hi", "--history", action="store_true", help="Access the history.")
     # parser.add_argument("-c", "--chat", action="store_true", help="Start a chat with this exchange.")
