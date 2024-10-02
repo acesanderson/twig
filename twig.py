@@ -4,7 +4,7 @@ With twig, you can query LLMs, and do crazy stuff with pipes and tees.
 """
 
 from rich.console import Console            # for rich output, including spinner
-console = Console(width=80) # for spinner
+console = Console(width=100) # for spinner
 
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
 with console.status(f'[bold green]Loading...[/bold green]', spinner="dots"):
@@ -13,12 +13,9 @@ with console.status(f'[bold green]Loading...[/bold green]', spinner="dots"):
     import argparse                             # for command line arguments
     import sys                                  # to capture stdin, and sys.exit
 
-# Our functions
+preferred_model = "llama3.1:latest" # going local for data security purposes
 
-def query(model, query):
-    chain = Chain(model)
-    response = chain.run(query)
-    return response
+# Our functions
 
 def print_markdown(markdown_string: str):
 	"""
@@ -57,7 +54,7 @@ if __name__ == "__main__":
     elif args.ollama:
         model = Model("llama3.1:latest")
     else:
-        model = Model("gpt")
+        model = Model(preferred_model)
     if args.query:
         with console.status(f'[bold green]Querying...[/bold green]', spinner="dots"):
             response = model.query(args.query + context, verbose=False)
