@@ -16,7 +16,7 @@ with console.status(f'[bold green]Loading...[/bold green]', spinner="dots"):
     import os
 
 file_path = ".history.pickle"
-preferred_model = "llama3.1:latest" # going local for data security purposes
+preferred_model = "gpt" # going local for data security purposes
 
 # Our functions
 
@@ -61,9 +61,9 @@ if __name__ == "__main__":
         sys.exit()
     if args.last:
         if args.raw:
-            print(messagestore.last())
+            print(messagestore.last().content)
         else:
-            print_markdown(messagestore.last())
+            print_markdown(messagestore.last().content)
         sys.exit()
     if args.history:
         messagestore.view_history()
@@ -88,7 +88,10 @@ if __name__ == "__main__":
         messagestore.add("user", combined_query)
         with console.status(f'[bold green]Querying...[/bold green]', spinner="dots"):
             response = model.query(combined_query, verbose=False)
-            print_markdown(response)
+            if args.raw:
+                print(response)
+            else:
+                print_markdown(response)
         messagestore.add("assistant", response)
 
 

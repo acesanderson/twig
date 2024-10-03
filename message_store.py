@@ -23,7 +23,7 @@ class MessageStore():
         Initializes the message store, and loads the history from a file.
         """
         self.console = console
-        self.file_path = ".history.pickle"
+        self.file_path = file_path
         self.messages: list[Message] = []
         self.load()
     
