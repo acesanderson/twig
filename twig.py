@@ -25,7 +25,7 @@ def print_markdown(markdown_string: str):
 	Prints formatted markdown to the console.
 	"""
 	# Create a Markdown object
-	border = "-" * 80
+	border = "-" * 100
 	markdown_string = f"{border}\n{markdown_string}\n\n{border}"
 	md = Markdown(markdown_string)
 	console.print(md)
@@ -54,6 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("-hi", "--history", action="store_true", help="Access the history.")
     parser.add_argument("-g", "--get", type=int, help="Get a message from the history.")
     parser.add_argument("-cl", "--clear", action="store_true", help="Clear the history.")
+    parser.add_argument("-a", "--append", type=str, help="Append to prompt (after context).")
     # parser.add_argument("-c", "--chat", action="store_true", help="Start a chat with this exchange.")
     args = parser.parse_args()
     if args.clear:
@@ -83,8 +84,15 @@ if __name__ == "__main__":
         model = Model("llama3.1:latest")
     else:
         model = Model(preferred_model)
-    if args.query:
-        combined_query = args.query + context
+    """
+    Our prompt is the query, context, and append.
+    Query is the default here.
+    Context is grabbed from stdin.
+    Append is an optional addition by user.
+    """
+    combined_query = '\n'.join([str(args.query), str(context), str(args.append)])      # Str because these can be Nonetype, \n for proper spacing.
+    print(combined_query)
+    if combined_query:
         messagestore.add("user", combined_query)
         with console.status(f'[bold green]Querying...[/bold green]', spinner="dots"):
             response = model.query(combined_query, verbose=False)
