@@ -1,3 +1,7 @@
+"""
+Universal message store object I built for Twig; can also be used for Ask, Tutorialize, and other scripts.
+"""
+
 from pydantic import BaseModel
 from rich.console import Console
 import pickle
