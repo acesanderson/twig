@@ -91,7 +91,6 @@ if __name__ == "__main__":
     Append is an optional addition by user.
     """
     combined_query = '\n'.join([str(args.query), str(context), str(args.append)])      # Str because these can be Nonetype, \n for proper spacing.
-    print(combined_query)
     if combined_query:
         messagestore.add("user", combined_query)
         with console.status(f'[bold green]Querying...[/bold green]', spinner="dots"):
