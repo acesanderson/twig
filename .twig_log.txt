@@ -1,15 +1,52 @@
-[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────── [0mMessage[1;32m ───────────────────────────────────────────────────────────────────────────────────────────────────────[0m
+[1;32m───────────────────────────────────────────────── [0mMessage[1;32m ─────────────────────────────────────────────────[0m
 [1;36massistant:[0m
-[34mCertainly! Here are ten examples of mammals:[0m
+[34mCertainly! Here's a short song about the legendary figure John Henry:[0m
 
-[1;34m1[0m[34m. Elephant[0m
-[1;34m2[0m[34m. Tiger[0m
-[1;34m3[0m[34m. Dolphin[0m
-[1;34m4[0m[34m. Human[0m
-[1;34m5[0m[34m. Kangaroo[0m
-[1;34m6[0m[34m. Bat[0m
-[1;34m7[0m[34m. Whale[0m
-[1;34m8[0m[34m. Gorilla[0m
-[1;34m9[0m[34m. Rabbit[0m
-[1;34m10[0m[34m. Platypus[0m
+[1;34m([0m[34mVerse [0m[1;34m1[0m[1;34m)[0m
+[34mIn the Appalachian mountains, where the rivers run so free,  [0m
+[34mLived a man named John Henry, strong as any man could be.  [0m
+[34mWith a hammer in his hand and a heart full of pride,  [0m
+[34mHe worked the railroad tracks, with his comrades by his side.  [0m
+
+[1;34m([0m[34mChorus[0m[1;34m)[0m[34m  [0m
+[34mOh, John Henry, mighty and true,  [0m
+[34mWith a hammer and a will that only grew.  [0m
+[34mBreaking the rocks and steel with a swing and a song,  [0m
+[34mJohn Henry, your legend lives on.  [0m
+
+[1;34m([0m[34mVerse [0m[1;34m2[0m[1;34m)[0m[34m  [0m
+[34mThe steam drill came to challenge, the men were taken aback,  [0m
+[34mBut John Henry stood determined, he couldn’t turn his back.  [0m
+[34m"I’ll die with my hammer in my hand,"[0m[34m he boldly declared,  [0m
+[34mFor the soul of the working man, he was truly prepared.  [0m
+
+[1;34m([0m[34mChorus[0m[1;34m)[0m[34m  [0m
+[34mOh, John Henry, mighty and true,  [0m
+[34mWith a hammer and a will that only grew.  [0m
+[34mBreaking the rocks and steel with a swing and a song,  [0m
+[34mJohn Henry, your legend lives on.  [0m
+
+[1;34m([0m[34mBridge[0m[1;34m)[0m[34m  [0m
+[34mThe mountain shook with echoes of steel against stone,  [0m
+[34mAs John faced the drill, in a race all his own.  [0m
+[34mHis muscles strained with power, each blow was a roar,  [0m
+[34mFor he proved that a man could be so much more.  [0m
+
+[1;34m([0m[34mVerse [0m[1;34m3[0m[1;34m)[0m[34m  [0m
+[34mHe worked through the sun rising, till it set in the west,  [0m
+[34mHis heart beat like a hammer, he gave it his best.  [0m
+[34mAnd though he laid down weary, his breath tired and gone,  [0m
+[34mJohn Henry's spirit lingers, his legend marches on.  [0m
+
+[1;34m([0m[34mChorus[0m[1;34m)[0m[34m  [0m
+[34mOh, John Henry, mighty and true,  [0m
+[34mWith a hammer and a will that only grew.  [0m
+[34mBreaking the rocks and steel with a swing and a song,  [0m
+[34mJohn Henry, your legend lives on.  [0m
+
+[1;34m([0m[34mOutro[0m[1;34m)[0m[34m  [0m
+[34mSo sing of John Henry, the steel-driving man,  [0m
+[34mA hero of the workers, in every land.  [0m
+[34mWith a hammer and a heart that knew no defeat,  [0m
+[34mJohn Henry's story, forever we'll repeat.  [0m
 
