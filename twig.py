@@ -10,14 +10,21 @@ console = Console(width=100)  # for spinner
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
 with console.status(f"[bold green]Loading...[/bold green]", spinner="dots"):
     from rich.markdown import Markdown  # for markdown output
-    from Chain import Model, Chain  # for querying models
+    from Chain import Model, MessageStore, Chain  # for querying models
     import argparse  # for command line arguments
     import sys  # to capture stdin, and sys.exit
-    from message_store import MessageStore  # type: ignore -- our own class for storing messages
-    import os
+    from pathlib import Path  # for file paths
 
-file_path = ".history.pickle"
-preferred_model = "gpt"  # going local for data security purposes
+# Constants
+dir_path = Path(__file__).parent
+file_path = dir_path / ".history.pickle"
+preferred_model = "gpt"  # we use a different alias for local models
+
+# Load message store
+messagestore = MessageStore(
+    console=console, history_file=file_path, log_file=".twig_log.txt"
+)
+Chain._message_store = messagestore
 
 # Our functions
 
@@ -34,10 +41,6 @@ def print_markdown(markdown_string: str):
 
 
 if __name__ == "__main__":
-    # Get the path of this file, then the pickle path
-    dir_path = os.path.dirname(os.path.realpath(__file__)) + "/"
-    file_path = dir_path + file_path
-    messagestore = MessageStore(console=console, file_path=file_path)
     # Capture stdin if it's being piped into script
     if not sys.stdin.isatty():
         context = sys.stdin.read()
@@ -46,6 +49,7 @@ if __name__ == "__main__":
     else:
         context = ""
     # Load message store
+    messagestore.load()
     # Capture arguments
     parser = argparse.ArgumentParser(
         description="Twig: A lightweight command line interface for Chain framework."
@@ -126,11 +130,11 @@ if __name__ == "__main__":
         [str(args.query), str(context), str(args.append)]
     )  # Str because these can be Nonetype, \n for proper spacing.
     if combined_query:
-        messagestore.add("user", combined_query)
+        messagestore.add_new("user", combined_query)
         with console.status(f"[bold green]Querying...[/bold green]", spinner="dots"):
             response = model.query(combined_query, verbose=False)
             if args.raw:
                 print(response)
             else:
                 print_markdown(response)
-        messagestore.add("assistant", response)
+        messagestore.add_new("assistant", response)
