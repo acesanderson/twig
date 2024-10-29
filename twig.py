@@ -86,7 +86,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Print the input (useful when piping and debugging).",
     )
-    # parser.add_argument("-c", "--chat", action="store_true", help="Start a chat with this exchange.")
+    parser.add_argument(
+        "-c",
+        "--chat",
+        action="store_true",
+        help="Pass message history to model (i.e. chat).",
+    )
     args = parser.parse_args()
     if args.print_input:
         if context:
@@ -136,9 +141,18 @@ if __name__ == "__main__":
     if combined_query:
         messagestore.add_new("user", combined_query)
         with console.status(f"[bold green]Querying...[/bold green]", spinner="dots"):
-            response = model.query(combined_query, verbose=False)
-            if args.raw:
-                print(response)
+            # If we want to chat, we pass the message history to the model.
+            if args.chat:
+                response = model.query(input=messagestore.messages, verbose=False)
+                if args.raw:
+                    print(response)
+                else:
+                    print_markdown(response)
+            # Default is a one-off, i.e. a single message object.
             else:
-                print_markdown(response)
+                response = model.query(combined_query, verbose=False)
+                if args.raw:
+                    print(response)
+                else:
+                    print_markdown(response)
         messagestore.add_new("assistant", response)
