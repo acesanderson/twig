@@ -17,12 +17,14 @@ with console.status(f"[bold green]Loading...[/bold green]", spinner="dots"):
 
 # Constants
 dir_path = Path(__file__).parent
-file_path = dir_path / ".history.pickle"
+history_file = dir_path / ".history.pickle"
+log_file = dir_path / ".twig_log.txt"
+
 preferred_model = "gpt"  # we use a different alias for local models
 
 # Load message store
 messagestore = MessageStore(
-    console=console, history_file=file_path, log_file=".twig_log.txt"
+    console=console, history_file=history_file, log_file=log_file
 )
 Chain._message_store = messagestore
 
