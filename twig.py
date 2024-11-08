@@ -8,7 +8,7 @@ from rich.console import Console  # for rich output, including spinner
 console = Console(width=100)  # for spinner
 
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
-with console.status(f"[bold green]Loading...[/bold green]", spinner="dots"):
+with console.status(f"[green]Loading...[/green]", spinner="dots"):
     from rich.markdown import Markdown  # for markdown output
     from Chain import Model, MessageStore, Chain  # for querying models
     import argparse  # for command line arguments
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
     if combined_query:
         messagestore.add_new("user", combined_query)
-        with console.status(f"[bold green]Querying...[/bold green]", spinner="dots"):
+        with console.status(f"[green]Querying...[green]", spinner="dots"):
             # If we want to chat, we pass the message history to the model.
             if args.chat:
                 response = model.query(input=messagestore.messages, verbose=False)
