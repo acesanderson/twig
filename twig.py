@@ -20,7 +20,7 @@ dir_path = Path(__file__).parent
 history_file = dir_path / ".history.pickle"
 log_file = dir_path / ".twig_log.txt"
 
-preferred_model = "gpt"  # we use a different alias for local models
+preferred_model = "claude"  # we use a different alias for local models
 
 # Load message store
 messagestore = MessageStore(
