@@ -144,7 +144,7 @@ def main():
             str(args.append) if args.append is not None else "",
         ]
     )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
-    if combined_query:
+    if combined_query.strip():
         messagestore.add_new("user", combined_query)
         with console.status(f"[green]Querying...[green]", spinner="dots"):
             # If we want to chat, we pass the message history to the model.
