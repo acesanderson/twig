@@ -42,7 +42,11 @@ def print_markdown(markdown_string: str):
     console.print(md)
 
 
-if __name__ == "__main__":
+# Main
+# ------------------------------------------------------------------------------
+
+
+def main():
     # Capture stdin if it's being piped into script
     if not sys.stdin.isatty():
         context = sys.stdin.read()
@@ -158,3 +162,7 @@ if __name__ == "__main__":
                 else:
                     print_markdown(response)
         messagestore.add_new("assistant", response)
+
+
+if __name__ == "__main__":
+    main()
