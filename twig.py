@@ -24,7 +24,7 @@ preferred_model = "claude"  # we use a different alias for local models
 
 # Load message store
 messagestore = MessageStore(
-    console=console, history_file=history_file, log_file=log_file
+    console=console, history_file=history_file, log_file=log_file, pruning=True
 )
 Chain._message_store = messagestore
 
