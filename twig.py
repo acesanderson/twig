@@ -84,6 +84,12 @@ def main():
         "-cl", "--clear", action="store_true", help="Clear the history."
     )
     parser.add_argument(
+        "-t",
+        "--temperature",
+        type=str,
+        help="Set temperature for query (0-1 for OpenAI, 0-2 for Anthropic and Gemini).",
+    )
+    parser.add_argument(
         "-a", "--append", type=str, help="Append to prompt (after context)."
     )
     parser.add_argument(
@@ -99,6 +105,10 @@ def main():
         help="Pass message history to model (i.e. chat).",
     )
     args = parser.parse_args()
+    if args.temperature:
+        temperature = float(args.temperature)
+    else:
+        temperature = None
     if args.print_input:
         if context:
             print(context)
@@ -149,14 +159,18 @@ def main():
         with console.status(f"[green]Querying...[green]", spinner="dots"):
             # If we want to chat, we pass the message history to the model.
             if args.chat:
-                response = model.query(input=messagestore.messages, verbose=False)
+                response = model.query(
+                    input=messagestore.messages, temperature=temperature, verbose=True
+                )
                 if args.raw:
                     print(response)
                 else:
                     print_markdown(response)
             # Default is a one-off, i.e. a single message object.
             else:
-                response = model.query(combined_query, verbose=False)
+                response = model.query(
+                    combined_query, temperature=temperature, verbose=True
+                )
                 if args.raw:
                     print(response)
                 else:
