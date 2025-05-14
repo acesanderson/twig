@@ -10,7 +10,7 @@ console = Console(width=100)  # for spinner
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
 with console.status(f"[green]Loading...[/green]", spinner="dots"):
     from rich.markdown import Markdown  # for markdown output
-    from Chain import Model, MessageStore, Chain  # for querying models
+    from Chain import Model, MessageStore, Chain, Chat  # for querying models
     import argparse  # for command line arguments
     import sys  # to capture stdin, and sys.exit
     from pathlib import Path  # for file paths
@@ -104,6 +104,12 @@ def main():
         action="store_true",
         help="Pass message history to model (i.e. chat).",
     )
+    parser.add_argument(
+        "-s",
+        "--shell",
+        action="store_true",
+        help="Run in shell mode (interactive).",
+    )
     args = parser.parse_args()
     if args.temperature:
         temperature = float(args.temperature)
@@ -141,6 +147,11 @@ def main():
         model = Model("llama3.1:latest")
     else:
         model = Model(preferred_model)
+    # If we want to chat so much that we want a shell, we use the Chat class.
+    if args.shell:
+        chat = Chat(model=model, console=console, messagestore=messagestore)
+        chat.chat()
+        sys.exit()
     """
     Our prompt is the query, context, and append.
     Query is the default here.
