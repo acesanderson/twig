@@ -225,7 +225,6 @@ def main():
     )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
     if combined_query.strip():
         if args.image:
-            breakpoint()
             mime_type, image_content = grab_image_from_clipboard()
             imagemessage = create_image_message(
                 combined_query, mime_type, image_content
