@@ -236,7 +236,9 @@ def main():
             # If we want to chat, we pass the message history to the model.
             if args.chat:
                 response = model.query(
-                    input=messagestore.messages, temperature=temperature, verbose=True
+                    query_input=messagestore.messages,
+                    temperature=temperature,
+                    verbose=True,
                 )
                 if args.raw:
                     print(response)
@@ -245,7 +247,7 @@ def main():
             # Default is a one-off, i.e. a single message object.
             else:
                 response = model.query(
-                    input=messagestore.messages[-1],
+                    query_input=messagestore.messages[-1],
                     temperature=temperature,
                     verbose=True,
                 )
