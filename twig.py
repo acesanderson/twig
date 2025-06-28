@@ -42,6 +42,58 @@ def print_markdown(markdown_string: str):
     console.print(md)
 
 
+def grab_image_from_clipboard() -> tuple | None:
+    """
+    Attempt to grab image from clipboard; return tuple of mime_type and base64.
+    """
+    import os
+
+    if "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ:
+        console.print("Image paste not available over SSH.", style="red")
+        return
+
+    import warnings
+    from PIL import ImageGrab
+    import base64, io
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")  # Suppress PIL warnings
+        image = ImageGrab.grabclipboard()
+
+    if image:
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        img_base64 = base64.b64encode(buffer.getvalue()).decode()
+        # Save for next query
+        console.print("Image captured!", style="green")
+        # Build our ImageMessage
+        image_content = img_base64
+        mime_type = "image/png"
+        return mime_type, image_content
+    else:
+        console.print("No image detected.", style="red")
+        sys.exit()
+
+
+def create_image_message(
+    combined_query: str, mime_type: str, image_content: str
+) -> "ImageMessage | None":
+    if not image_content or not mime_type:
+        return
+    role = "user"
+    text_content = combined_query
+
+    from Chain.message.imagemessage import ImageMessage
+
+    imagemessage = ImageMessage(
+        role=role,
+        text_content=text_content,
+        image_content=image_content,
+        mime_type=mime_type,
+    )
+    return imagemessage
+
+
 # Main
 # ------------------------------------------------------------------------------
 
@@ -75,6 +127,12 @@ def main():
     )
     parser.add_argument(
         "-l", "--last", action="store_true", help="Return the last output."
+    )
+    parser.add_argument(
+        "-i",
+        "--image",
+        action="store_true",
+        help="Include an image in clipboard in query.",
     )
     parser.add_argument(
         "-hi", "--history", action="store_true", help="Access the history."
@@ -166,7 +224,14 @@ def main():
         ]
     )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
     if combined_query.strip():
-        messagestore.add_new("user", combined_query)
+        if args.image:
+            mime_type, image_content = grab_image_from_clipboard()
+            imagemessage = create_image_message(
+                combined_query, mime_type, image_content
+            )
+            messagestore.add(imagemessage)
+        else:
+            messagestore.add_new("user", combined_query)
         with console.status(f"[green]Querying...[green]", spinner="dots"):
             # If we want to chat, we pass the message history to the model.
             if args.chat:
@@ -180,7 +245,9 @@ def main():
             # Default is a one-off, i.e. a single message object.
             else:
                 response = model.query(
-                    combined_query, temperature=temperature, verbose="vvv"
+                    query_input = combined_query,
+                    temperature=temperature,
+                    verbose="vvv",
                 )
                 if args.raw:
                     print(response)
