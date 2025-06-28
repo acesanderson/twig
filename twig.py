@@ -9,15 +9,14 @@ console = Console(width=100)  # for spinner
 
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
 with console.status(f"[green]Loading...[/green]", spinner="dots"):
-    from rich.markdown import Markdown  # for markdown output
-    from Chain import Model, MessageStore, Chain, Chat, ModelStore  # for querying models
-    import argparse  # for command line arguments
-    import sys  # to capture stdin, and sys.exit
-    from pathlib import Path  # for file paths
+    from rich.markdown import Markdown
+    from Chain import Model, MessageStore, Chain, Chat, ModelStore
+    import argparse, sys
+    from pathlib import Path
 
 # Constants
 dir_path = Path(__file__).parent
-history_file = dir_path / ".history.pickle"
+history_file = dir_path / ".history.json"
 log_file = dir_path / ".twig_log.txt"
 
 preferred_model = "claude"  # we use a different alias for local models
@@ -27,6 +26,7 @@ messagestore = MessageStore(
     console=console, history_file=history_file, log_file=log_file, pruning=True
 )
 Chain._message_store = messagestore
+Chain._console = console
 
 # Our functions
 
@@ -171,7 +171,7 @@ def main():
             # If we want to chat, we pass the message history to the model.
             if args.chat:
                 response = model.query(
-                    query_input=messagestore.messages, temperature=temperature, verbose=True
+                    query_input=messagestore, temperature=temperature, verbose="vvv"
                 )
                 if args.raw:
                     print(response)
@@ -180,7 +180,7 @@ def main():
             # Default is a one-off, i.e. a single message object.
             else:
                 response = model.query(
-                    combined_query, temperature=temperature, verbose=True
+                    combined_query, temperature=temperature, verbose="vvv"
                 )
                 if args.raw:
                     print(response)
