@@ -10,7 +10,7 @@ console = Console(width=100)  # for spinner
 # Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
 with console.status(f"[green]Loading...[/green]", spinner="dots"):
     from rich.markdown import Markdown  # for markdown output
-    from Chain import Model, MessageStore, Chain, Chat  # for querying models
+    from Chain import Model, MessageStore, Chain, Chat, ModelStore  # for querying models
     import argparse  # for command line arguments
     import sys  # to capture stdin, and sys.exit
     from pathlib import Path  # for file paths
@@ -139,7 +139,7 @@ def main():
             print_markdown(messagestore.get(args.get).content)
         sys.exit()
     if args.list:
-        console.print(Model.models)
+        console.print(ModelStore.models())
         sys.exit()
     if args.model:
         model = Model(args.model)
@@ -171,7 +171,7 @@ def main():
             # If we want to chat, we pass the message history to the model.
             if args.chat:
                 response = model.query(
-                    input=messagestore.messages, temperature=temperature, verbose=True
+                    query_input=messagestore.messages, temperature=temperature, verbose=True
                 )
                 if args.raw:
                     print(response)
