@@ -1,0 +1,116 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "twig"
+version = "1.5"
+description = "An evolution of Leviathan - flexible media to LLM context converter with RAG capabilities"
+requires-python = ">=3.12,<3.13.4"
+dependencies = [
+    "pydantic",
+    "fastapi",
+    "uvicorn",
+    "requests",
+    "rich",
+    "chromadb",
+    "sentence-transformers",
+    "rerankers",
+    "psycopg2-binary",
+    "youtube-transcript-api>=1.1.1",
+    "newspaper3k",
+    "markitdown[all]",
+    "pyaudio",
+    "pydub",
+    "torch==2.7.1",
+    "transformers",
+    "pyannote.audio",
+    "ollama",
+    "openai",
+    "google-genai",
+    "lxml[html-clean]>=6.0.0",
+    "tinydb>=4.8.2",
+    "anthropic>=0.57.1",
+    "instructor>=1.9.2",
+    "tiktoken>=0.9.0",
+    "yt-dlp[default]>=2025.6.30",
+    "pytest>=8.4.1",
+    "pygithub>=2.6.1",
+]
+
+[project.scripts]
+twig = "twig.twig:main"
+
+[tool.pytest.ini_options]
+addopts = "-v -s --tb=short --no-header --showlocals --pdb -x"
+log_cli = true
+log_cli_level = "INFO"
+
+# Hatchling configuration (replaces setuptools.packages.find)
+[tool.hatch.build.targets.wheel]
+packages = ["twig"]
+
+
+# Ruff customizations -- let's see if I like this or not
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+# Start with defaults (F, E subset) and add quality-of-life improvements
+select = [
+    # Default rules (Pyflakes + essential pycodestyle)
+    "F",   # Pyflakes - catches real bugs
+    "E",   # pycodestyle errors
+    
+    # Modern Python upgrades - automatic fixes for outdated syntax
+    "UP",  # pyupgrade - keeps your code modern
+    
+    # Code simplification - removes unnecessary complexity
+    "SIM", # flake8-simplify - cleaner, more readable code
+    
+    # Unused code detection
+    "F401", # Unused imports (already in F, but emphasizing)
+    "ARG",  # flake8-unused-arguments - catch unused function parameters
+    
+    # Common bug patterns
+    "B",   # flake8-bugbear - catches subtle bugs and anti-patterns
+    "RUF", # Ruff-specific rules - modern Python best practices
+    
+    # Security (basic set)
+    "S102", # exec-builtin - catches dangerous exec() usage
+    "S103", # bad-file-permissions - overly permissive file permissions
+    "S108", # hardcoded-temp-file - security issue with temp files
+    
+    # Performance improvements
+    "PERF", # Perflint - catches performance anti-patterns
+    
+    # Boolean trap prevention
+    "FBT003", # boolean-positional-value-in-call - improves call clarity
+]
+
+ignore = [
+    # Too aggressive for most teams
+    "SIM118", # in-dict-keys - can reduce readability
+    "ARG001", # unused-function-argument - common in callbacks/interfaces
+    "ARG002", # unused-method-argument - common in class inheritance
+    
+    # Stylistic preferences (let formatter handle these)
+    "E501",   # line-too-long - let formatter decide
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files can be more lenient
+"tests/**/*.py" = [
+    "S101",    # assert statements are fine in tests
+    "ARG",     # test fixtures often have unused arguments
+    "FBT",     # boolean flags are common in test parametrization
+]
+
+# Scripts and one-offs can be less strict
+"scripts/**/*.py" = ["ARG", "SIM"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["your_package_name"]  # Replace with your package name
+force-sort-within-sections = true
+split-on-trailing-comma = true

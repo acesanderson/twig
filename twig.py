@@ -229,14 +229,11 @@ def main():
             imagemessage = create_image_message(
                 combined_query, mime_type, image_content
             )
-            messagestore.add(imagemessage)
-        else:
-            messagestore.add_new("user", combined_query)
         with console.status(f"[green]Querying...[green]", spinner="dots"):
             # If we want to chat, we pass the message history to the model.
             if args.chat:
                 response = model.query(
-                    query_input=messagestore, temperature=temperature, verbose="vvv"
+                    query_input=messagestore.messages, temperature=temperature, verbose="vvv"
                 )
                 if args.raw:
                     print(response)
@@ -253,7 +250,6 @@ def main():
                     print(response)
                 else:
                     print_markdown(response)
-        messagestore.add_new("assistant", response)
 
 
 if __name__ == "__main__":
