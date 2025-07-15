@@ -245,7 +245,7 @@ def main():
             # Default is a one-off, i.e. a single message object.
             else:
                 response = model.query(
-                    query_input = combined_query,
+                    query_input=combined_query,
                     temperature=temperature,
                     verbose="vvv",
                 )
@@ -253,7 +253,6 @@ def main():
                     print(response)
                 else:
                     print_markdown(response)
-        messagestore.add_new("assistant", response)
 
 
 if __name__ == "__main__":
