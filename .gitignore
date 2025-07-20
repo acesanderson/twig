@@ -9,3 +9,4 @@ Twig.egg-info/
 .twig_log.txt
 .DS_Store
 *.json
+*.log
