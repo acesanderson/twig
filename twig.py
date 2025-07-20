@@ -4,29 +4,27 @@ With twig, you can query LLMs, and do crazy stuff with pipes and tees.
 """
 
 from rich.console import Console  # for rich output, including spinner
-
-console = Console(width=100)  # for spinner
-
-# Imports are slow (until I refactor Chain to lazy load!), so let's add a spinner.
-with console.status(f"[green]Loading...[/green]", spinner="dots"):
-    from rich.markdown import Markdown
-    from Chain import Model, MessageStore, Chain, Chat, ModelStore
-    import argparse, sys
-    from pathlib import Path
+from rich.markdown import Markdown
+from Chain import Model, MessageStore, Chain, Chat, ModelStore, ChainCache
+import argparse, sys
+from pathlib import Path
 
 # Constants
+console = Console(width=100)  # for spinner
+Model._console = console
 dir_path = Path(__file__).parent
-history_file = dir_path / ".history.json"
+Model._chain_cache = ChainCache(
+    dir_path / ".twig_cache"
+)  # Set the chain cache for Model
+history_file = dir_path / ".twig_history.json"
 log_file = dir_path / ".twig_log.txt"
-
 preferred_model = "claude"  # we use a different alias for local models
 
 # Load message store
 messagestore = MessageStore(
     console=console, history_file=history_file, log_file=log_file, pruning=True
 )
-Chain._message_store = messagestore
-Chain._console = console
+Chain._message_store = messagestore  # Set the message store for Chain
 
 # Our functions
 
@@ -169,10 +167,7 @@ def main():
         help="Run in shell mode (interactive).",
     )
     args = parser.parse_args()
-    if args.temperature:
-        temperature = float(args.temperature)
-    else:
-        temperature = None
+    temperature = float(args.temperature) if args.temperature else None
     if args.print_input:
         if context:
             print(context)
@@ -223,33 +218,51 @@ def main():
             str(args.append) if args.append is not None else "",
         ]
     )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
+    # Construct message to add to message store.
     if combined_query.strip():
         if args.image:
             mime_type, image_content = grab_image_from_clipboard()
             imagemessage = create_image_message(
                 combined_query, mime_type, image_content
             )
-        with console.status(f"[green]Querying...[green]", spinner="dots"):
-            # If we want to chat, we pass the message history to the model.
-            if args.chat:
-                response = model.query(
-                    query_input=messagestore.messages, temperature=temperature, verbose="vvv"
-                )
-                if args.raw:
-                    print(response)
-                else:
-                    print_markdown(response)
-            # Default is a one-off, i.e. a single message object.
-            else:
-                response = model.query(
-                    query_input=combined_query,
-                    temperature=temperature,
-                    verbose="vvv",
-                )
-                if args.raw:
-                    print(response)
-                else:
-                    print_markdown(response)
+            messagestore.append(imagemessage)
+        else:
+            from Chain.message.textmessage import TextMessage
+
+            textmessage = TextMessage(role="user", content=combined_query)
+            messagestore.append(textmessage)
+    # Check that we have messagestore.
+    assert len(messagestore) > 0, "No messages in message store."
+    # Now to generate our responses.
+    from Chain.progress.verbosity import Verbosity
+
+    ## Option 1: If we want to chat, we pass the message history to the model.
+    if args.chat:
+        # Construct a chain, which orchestrates persistence.
+        chain = Chain(model=model)
+        response = chain.run()
+        response = model.query(
+            query_input=messagestore.messages,
+            temperature=temperature,
+            verbose=Verbosity.SUMMARY,
+        )
+        if args.raw:
+            print(response)
+        else:
+            print_markdown(response)
+    ## Option 2: If we just want a one-off query, we pass only the final message (i.e. combined_query).
+    else:
+        response = model.query(
+            query_input=messagestore.messages[-1],
+            temperature=temperature,
+            verbose=Verbosity.SUMMARY,
+        )
+        # Save the response to message store.
+        messagestore.append(response.message)
+        if args.raw:
+            print(response)
+        else:
+            print_markdown(response)
 
 
 if __name__ == "__main__":

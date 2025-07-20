@@ -36,6 +36,7 @@ dependencies = [
     "yt-dlp[default]>=2025.6.30",
     "pytest>=8.4.1",
     "pygithub>=2.6.1",
+    "pillow>=11.3.0",
 ]
 
 [project.scripts]
