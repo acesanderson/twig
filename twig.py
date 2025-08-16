@@ -231,8 +231,9 @@ def main():
 
             textmessage = TextMessage(role="user", content=combined_query)
             messagestore.append(textmessage)
-    # Check that we have messagestore.
-    assert len(messagestore) > 0, "No messages in message store."
+    assert len(messagestore.messages) > 0, (
+        "Message store is empty. Please provide a query."
+    )
     # Now to generate our responses.
     from Chain.progress.verbosity import Verbosity
 
