@@ -10,3 +10,4 @@ Twig.egg-info/
 .DS_Store
 *.json
 *.log
+.twig_cache
