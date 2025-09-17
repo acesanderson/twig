@@ -5,7 +5,7 @@ With twig, you can query LLMs, and do crazy stuff with pipes and tees.
 
 from rich.console import Console  # for rich output, including spinner
 from rich.markdown import Markdown
-from Chain import Model, MessageStore, Chain, Chat, ModelStore, ChainCache
+from Chain import Model, MessageStore, Chain, Chat, ModelStore, ChainCache, ModelClient
 import argparse, sys
 from pathlib import Path
 
@@ -19,6 +19,7 @@ Model._chain_cache = ChainCache(
 history_file = dir_path / ".twig_history.json"
 log_file = dir_path / ".twig_log.txt"
 preferred_model = "claude"  # we use a different alias for local models
+preferred_server_model = "gpt-oss:latest"
 
 # Load message store
 messagestore = MessageStore(
@@ -117,9 +118,7 @@ def main():
     parser.add_argument(
         "-li", "--list", action="store_true", help="List all available models."
     )
-    parser.add_argument(
-        "-o", "--ollama", action="store_true", help="Use llama3.1 locally."
-    )
+    parser.add_argument("-L", "--local", action="store_true", help="Use SiphonServer.")
     parser.add_argument(
         "-r", "--raw", action="store_true", help="Print raw output (not markdown)."
     )
@@ -168,6 +167,7 @@ def main():
     )
     args = parser.parse_args()
     temperature = float(args.temperature) if args.temperature else None
+    # Archival options
     if args.print_input:
         if context:
             print(context)
@@ -194,10 +194,13 @@ def main():
     if args.list:
         console.print(ModelStore.models())
         sys.exit()
-    if args.model:
+    # We're doing a query! Set our model
+    if args.local and not args.model:
+        model = ModelClient(preferred_server_model)
+    elif args.model and args.local:
+        model = ModelClient(args.model)
+    elif args.model and not args.local:
         model = Model(args.model)
-    elif args.ollama:
-        model = Model("llama3.1:latest")
     else:
         model = Model(preferred_model)
     # If we want to chat so much that we want a shell, we use the Chat class.
@@ -240,8 +243,6 @@ def main():
     ## Option 1: If we want to chat, we pass the message history to the model.
     if args.chat:
         # Construct a chain, which orchestrates persistence.
-        chain = Chain(model=model)
-        response = chain.run()
         response = model.query(
             query_input=messagestore.messages,
             temperature=temperature,
