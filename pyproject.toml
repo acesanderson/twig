@@ -37,6 +37,7 @@ dependencies = [
     "pytest>=8.4.1",
     "pygithub>=2.6.1",
     "pillow>=11.3.0",
+    "database-clients",
 ]
 
 [project.scripts]
@@ -115,3 +116,6 @@ ignore = [
 known-first-party = ["your_package_name"]  # Replace with your package name
 force-sort-within-sections = true
 split-on-trailing-comma = true
+
+[tool.uv.sources]
+database-clients = { path = "../database-clients", editable = true }
