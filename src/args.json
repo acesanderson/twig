@@ -1,0 +1,77 @@
+{
+  "flags": [
+    {
+      "abbrev": "-m",
+      "name": "--model",
+      "type": "str",
+      "help": "Specify the model to use; defaults to 'claude'",
+      "default": "claude",
+      "attr": "model"
+    },
+    {
+      "abbrev": "-L",
+      "name": "--local",
+      "action": "store_true",
+      "help": "Use local SiphonServer instead of remote API",
+      "attr": "local"
+    },
+    {
+      "abbrev": "-r",
+      "name": "--raw",
+      "action": "store_true",
+      "help": "Print raw output without markdown formatting",
+      "attr": "raw"
+    },
+    {
+      "abbrev": "-t",
+      "name": "--temperature",
+      "type": "float",
+      "help": "Set the temperature for the model (0.0 to 1.0)",
+      "attr": "temperature"
+    },
+    {
+      "abbrev": "-c",
+      "name": "--chat",
+      "action": "store_true",
+      "help": "Enable chat mode to include message history - i.e. remember previous messages",
+      "attr": "chat"
+    }
+  ],
+  "commands": [
+    {
+      "abbrev": "-h",
+      "name": "--history",
+      "action": "store_true",
+      "help": "View message history",
+      "handler": "handle_history"
+    },
+    {
+      "abbrev": "-w",
+      "name": "--wipe",
+      "action": "store_true",
+      "help": "Wipe message history",
+      "handler": "handle_wipe"
+    },
+    {
+      "abbrev": "-s",
+      "name": "--shell",
+      "action": "store_true",
+      "help": "Enter interactive shell mode",
+      "handler": "handle_shell"
+    },
+    {
+      "abbrev": "-l",
+      "name": "--last",
+      "action": "store_true",
+      "help": "Get the last message",
+      "handler": "handle_last"
+    },
+    {
+      "abbrev": "-g",
+      "name": "--get",
+      "type": "int",
+      "help": "Get a specific message from history",
+      "handler": "handle_get"
+    }
+  ]
+}

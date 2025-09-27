@@ -8,6 +8,5 @@ Twig.egg-info/
 .history.pickle
 .twig_log.txt
 .DS_Store
-*.json
 *.log
 .twig_cache
