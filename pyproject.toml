@@ -10,7 +10,7 @@ requires-python = ">=3.12,<3.13.4"
 dependencies = [
     "rich",
     "pillow",
-    # add "importlib_resources; python_version < '3.9'" if you need the backport
+    "Chain",
 ]
 
 [project.scripts]
@@ -20,6 +20,7 @@ twig = "twig.twig:main"  # src/twig/twig.py -> def main()
 # Point Hatchling at the src/ package; this is the critical bit for src-layout.
 [tool.hatch.build.targets.wheel]
 packages = ["src/twig"]
+sources = ["src"]
 
 # If you ship non-.py files inside the package (configs, prompts, assets),
 # list them so they’re included in wheels and sdists.
