@@ -81,3 +81,10 @@ split-on-trailing-comma = true
 [tool.uv.sources]
 database-clients = { path = "../database-clients", editable = true }
 Chain = { path = "../Chain", editable = true }
+
+[tool.uv.workspace]
+members = [
+    ".",
+]
+
+

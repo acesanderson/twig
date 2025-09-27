@@ -1,4 +1,4 @@
-from Chain import MessageStore
+from Chain import MessageStore, ChainCache, Model
 from rich.console import Console
 from argparse import ArgumentParser
 from twig.config_loader import ConfigLoader
@@ -23,8 +23,10 @@ class TwigCLI(HandlerMixin):
     """
 
     def __init__(self):
-        self.messagestore = MessageStore()
         self.console = Console()
+        self.messagestore = MessageStore(
+            history_file=".twig_history.json", pruning=True, console=self.console
+        )
         self.config = ConfigLoader().config
         self.validate_handlers()  # from HandlerMixin
         self.parser = self.setup_parser()
@@ -37,17 +39,26 @@ class TwigCLI(HandlerMixin):
         # Handle flags
         for flag in self.config["flags"]:
             attr = flag.pop("attr")
-            arg_name = flag["name"].lstrip("-").replace("-", "_")
-            self.attr_mapping[arg_name] = attr
-            parser.add_argument(**flag)
+            abbrev = flag.pop("abbrev", None)
+            name = flag.pop("name")
 
-        # Handle commands with exclusive group
+            # Combine into args list for argparse
+            args = [abbrev, name] if abbrev else [name]
+            arg_name = name.lstrip("-").replace("-", "_")
+            self.attr_mapping[arg_name] = attr
+            parser.add_argument(*args, **flag)
+
+        # Handle commands
         command_group = parser.add_mutually_exclusive_group()
         for command in self.config["commands"]:
             handler = command.pop("handler")
-            arg_name = command["name"].lstrip("-").replace("-", "_")
+            abbrev = command.pop("abbrev", None)
+            name = command.pop("name")
+
+            args = [abbrev, name] if abbrev else [name]
+            arg_name = name.lstrip("-").replace("-", "_")
             self.command_mapping[arg_name] = handler
-            command_group.add_argument(**command)
+            command_group.add_argument(*args, **command)
 
         return parser
 
