@@ -39,7 +39,7 @@
   ],
   "commands": [
     {
-      "abbrev": "-h",
+      "abbrev": "-H",
       "name": "--history",
       "action": "store_true",
       "help": "View message history",
