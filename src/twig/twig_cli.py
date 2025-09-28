@@ -1,4 +1,6 @@
 from Chain.message.messagestore import MessageStore
+from Chain.chain.chain import Chain
+from Chain.progress.verbosity import Verbosity
 from rich.console import Console
 from argparse import ArgumentParser
 from twig.config_loader import ConfigLoader
@@ -26,37 +28,36 @@ class TwigCLI(HandlerMixin):
     - all handler methods (e.g., handle_history, handle_wipe, etc.) should be implemented in this class.
     """
 
-    def __init__(self, cache: bool = True):
-        # Scaffold out the CLI
+    def __init__(self, cache: bool = True, verbosity: Verbosity = Verbosity.COMPLETE):
+        logger.info("Initializing TwigCLI")
+        # Basic constants
         self.console = Console()
-        self.messagestore = MessageStore(
+        self.verbosity = verbosity
+        # Set up message store
+        Chain._message_store = MessageStore(
             history_file=".twig_history.json", pruning=True, console=self.console
         )
+        self.message_store = Chain._message_store
+        # Set up cache
         if cache:
             from Chain.model.model import Model
             from Chain.cache.cache import ChainCache
 
             Model._chain_cache = ChainCache(".twig_cache")
-        self.messagestore.load()
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
         self.stdin: str = self._get_stdin()  # capture stdin if piped
         # Setup parser and parse args
+        self.flags: dict = {}  # This will hold all the flag values after parsing
         self.parser: ArgumentParser = self._setup_parser()
         self._parse_args()
         # We will always have self.query_input at this point; it may be a list or string
-        self.query_input: str = self._coerce_query_input(self.query_input)
 
     def _get_stdin(self) -> str:
         """
         Get implicit context from clipboard or other sources.
         """
-        if not sys.stdin.isatty():
-            context = sys.stdin.read()
-            # We add this as context to the query
-            context = f"\n<context>\n{context}</context>"
-        else:
-            context = ""
+        context = sys.stdin.read() if not sys.stdin.isatty() else ""
         return context
 
     def _coerce_query_input(self, query_input: str | list) -> str:
@@ -86,15 +87,14 @@ class TwigCLI(HandlerMixin):
             )
 
         # Handle flags
+        # Handle flags
         for flag in self.config["flags"]:
-            attr = flag.pop("attr")
             abbrev = flag.pop("abbrev", None)
             name = flag.pop("name")
 
-            # Combine into args list for argparse
             args = [abbrev, name] if abbrev else [name]
             arg_name = name.lstrip("-").replace("-", "_")
-            self.attr_mapping[arg_name] = attr
+            self.attr_mapping[arg_name] = arg_name  # Same as dest
             parser.add_argument(*args, **flag)
 
         # Handle commands
@@ -113,18 +113,35 @@ class TwigCLI(HandlerMixin):
 
     def _parse_args(self):
         """
-        Parse arguments and assign them to instance attributes.
-        Execute commands if provided, otherwise prepare for query processing.
+        Parse arguments and execute commands or prepare for query processing.
         """
-        args = self.parser.parse_args()
+        self.args = self.parser.parse_args()
 
-        # Assign all parsed arguments to self using attr_mapping
+        # Create flags dictionary
+        self.flags = {}
         for arg_name, attr_name in self.attr_mapping.items():
-            if hasattr(args, arg_name):
-                setattr(self, attr_name, getattr(args, arg_name))
+            if hasattr(self.args, arg_name):
+                self.flags[attr_name] = getattr(self.args, arg_name)
+
+        # Coerce query input to string if necessary
+        self.flags["query_input"] = self._coerce_query_input(self.flags["query_input"])
+
+        # Check if any commands were specified and execute them
+        for arg_name, handler_name in self.command_mapping.items():
+            if getattr(self.args, arg_name, False):
+                handler = getattr(self, handler_name)
+                if getattr(self.args, arg_name) not in [True, False]:
+                    handler(getattr(self.args, arg_name))
+                else:
+                    handler()
+                return
+
+        # If no commands were executed and we have query input, process it
+        if self.args.query_input:
+            self.query()
 
     # Debugging methods
-    def _print_all_attrs(self, pretty: bool = False):
+    def _print_all_attrs(self, pretty: bool = True):
         """
         Debugging method to print all attributes of the instance.
         """
@@ -150,5 +167,3 @@ class TwigCLI(HandlerMixin):
 
 if __name__ == "__main__":
     cli = TwigCLI()
-    cli._print_all_attrs(pretty=True)
-    print(cli._get_handler_for_command("history"))

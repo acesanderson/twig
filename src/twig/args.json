@@ -13,36 +13,55 @@
       "name": "--model",
       "type": "str",
       "help": "Specify the model to use; defaults to 'claude'",
-      "default": "claude",
-      "attr": "model"
+      "default": "claude"
     },
     {
       "abbrev": "-L",
       "name": "--local",
       "action": "store_true",
-      "help": "Use local SiphonServer instead of remote API",
-      "attr": "local"
+      "help": "Use local SiphonServer instead of remote API"
     },
     {
       "abbrev": "-r",
       "name": "--raw",
       "action": "store_true",
-      "help": "Print raw output without markdown formatting",
-      "attr": "raw"
+      "help": "Print raw output without markdown formatting"
     },
     {
       "abbrev": "-t",
       "name": "--temperature",
       "type": "float",
-      "help": "Set the temperature for the model (0.0 to 1.0)",
-      "attr": "temperature"
+      "help": "Set the temperature for the model (0.0 to 1.0)"
     },
     {
       "abbrev": "-c",
       "name": "--chat",
       "action": "store_true",
-      "help": "Enable chat mode to include message history - i.e. remember previous messages",
-      "attr": "chat"
+      "help": "Enable chat mode to include message history - i.e. remember previous messages"
+    },
+    {
+      "abbrev": "-a",
+      "name": "--append",
+      "type": "str",
+      "help": "Append a message to the query after stdin context."
+    },
+    {
+      "abbrev": "-p",
+      "name": "--prepend",
+      "type": "str",
+      "help": "Prepend a message to the query before stdin context."
+    },
+    {
+      "abbrev": "-f",
+      "name": "--file",
+      "type": "str",
+      "help": "Read input from a file instead of stdin."
+    },
+    {
+      "abbrev": "-d",
+      "name": "--debug",
+      "action": "store_true",
+      "help": "Enable debug mode for verbose output."
     }
   ],
   "commands": [

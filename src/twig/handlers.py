@@ -16,6 +16,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from Chain.message.imagemessage import ImageMessage
+    from Chain.message.messagestore import MessageStore
+    from Chain.progress.verbosity import Verbosity
+    from Chain.result.response import Response
 
 
 class HandlerMixin:
@@ -101,72 +104,112 @@ class HandlerMixin:
 
     # Handlers -- should match config file exactly (per validate_handlers)
     def handle_history(self):
-        pass
+        """
+        View message history and exit.
+        """
+        import sys
+
+        self.message_store.view_history()
+        sys.exit()
 
     def handle_wipe(self):
-        pass
+        """
+        Clear the message history after user confirmation.
+        """
+        from rich.prompt import Confirm
+
+        confirm = Confirm.ask(
+            "[red]Are you sure you want to wipe the message history? This action cannot be undone.[/red]",
+            default=False,
+        )
+        if confirm:
+            self.message_store.clear()
+            self.console.print("[green]Message history wiped.[/green]")
+        else:
+            self.console.print("[yellow]Wipe cancelled.[/yellow]")
 
     def handle_shell(self):
         pass
 
     def handle_last(self):
-        pass
+        """
+        Print the last message in the message store and exit.
+        """
+        import sys
+
+        # Get last message
+        self.message_store: MessageStore
+        last_message = self.message_store.last()
+        # If no messages, inform user
+        if not last_message:
+            self.console.print("[red]No messages in history.[/red]")
+            sys.exit()
+        # Print last message
+        if self.flags["raw"]:
+            print(last_message)
+        else:
+            self.print_markdown(str(last_message))
+        sys.exit()
 
     def handle_get(self, index: int):
         pass
 
     def query(self):
-        ...
-        # Create combined query.
+        """
+        Handle a query by combining query input, context, and append, then sending to model.
 
-        # combined_query = "\n".join(
-        #     [
-        #         str(args.query) if args.query is not None else "",
-        #         str(context) if context is not None else "",
-        #         str(args.append) if args.append is not None else "",
-        #     ]
-        # )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
-        # # Construct message to add to message store.
-        # if combined_query.strip():
-        #     if args.image:
-        #         mime_type, image_content = grab_image_from_clipboard()
-        #         imagemessage = create_image_message(
-        #             combined_query, mime_type, image_content
-        #         )
-        #         messagestore.append(imagemessage)
-        #     else:
-        #         from Chain.message.textmessage import TextMessage
-        #
-        #         textmessage = TextMessage(role="user", content=combined_query)
-        #         messagestore.append(textmessage)
-        # assert len(messagestore.messages) > 0, (
-        #     "Message store is empty. Please provide a query."
-        # )
-        # # Now to generate our responses.
-        # from Chain.progress.verbosity import Verbosity
-        #
-        # ## Option 1: If we want to chat, we pass the message history to the model.
-        # if args.chat:
-        #     # Construct a chain, which orchestrates persistence.
-        #     response = model.query(
-        #         query_input=messagestore.messages,
-        #         temperature=temperature,
-        #         verbose=Verbosity.SUMMARY,
-        #     )
-        #     if args.raw:
-        #         print(response)
-        #     else:
-        #         print_markdown(response)
-        # ## Option 2: If we just want a one-off query, we pass only the final message (i.e. combined_query).
-        # else:
-        #     response = model.query(
-        #         query_input=messagestore.messages[-1],
-        #         temperature=temperature,
-        #         verbose=Verbosity.SUMMARY,
-        #     )
-        #     # Save the response to message store.
-        #     messagestore.append(response.message)
-        #     if args.raw:
-        #         print(response)
-        #     else:
-        #         print_markdown(response)
+        Simplest usage:
+            `twig "What is the capital of France?"`
+        Maximal usage:
+            `cat "some_document.md" | twig -q "Look at this doc." -a " Please summarize."`
+        """
+        # Our imports
+        from Chain.chain.chain import Chain
+        from Chain.model.model import Model
+        from Chain.prompt.prompt import Prompt
+        from Chain.result.response import Response
+        from Chain.progress.verbosity import Verbosity
+        import sys
+
+        # Type hints since mixins confuse IDEs
+        self.flags: dict
+        self.stdin: str
+        self.verbosity: Verbosity
+
+        # Create combined query: query + context + append
+        query_input = self.flags.get("query_input", "")
+        context = f"<context>{self.stdin}</context>" if self.stdin else ""
+        append = self.flags.get("append") or ""
+
+        combined_query = "\n\n".join(
+            part for part in (query_input, context, append) if part
+        )
+
+        # Grab our flags
+        ## NOTE: we need to implement temperature, image, and other flags here.
+        chat = self.flags["chat"]
+        raw = self.flags["raw"]
+        match (chat, raw):
+            case (False, False):  # One-off request, pretty print
+                model = Model(self.flags["model"])
+                prompt = Prompt(combined_query)
+                chain = Chain(prompt=prompt, model=model)
+                response = chain.run(verbose=self.verbosity)
+                assert isinstance(response, Response), (
+                    "Response is not of type Response"
+                )
+                self.print_markdown(str(response.content))
+                sys.exit()
+            case (False, True):  # One-off request, raw print
+                model = Model(self.flags["model"])
+                prompt = Prompt(combined_query)
+                chain = Chain(prompt=prompt, model=model)
+                response = chain.run(verbose=self.verbosity)
+                assert isinstance(response, Response), (
+                    "Response is not of type Response"
+                )
+                print(response)
+            case (True, False):  # Chat (with history), pretty print
+                ...
+            case (True, True):  # Chat (with history), raw print
+                ...
