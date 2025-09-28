@@ -13,9 +13,6 @@ dependencies = [
     "Chain",
 ]
 
-[project.scripts]
-twig = "twig.twig:main"  # src/twig/twig.py -> def main()
-
 # ── Hatchling (build) ──────────────────────────────────────────────────────────
 # Point Hatchling at the src/ package; this is the critical bit for src-layout.
 [tool.hatch.build.targets.wheel]
@@ -87,4 +84,5 @@ members = [
     ".",
 ]
 
-
+[project.scripts]
+twig = "twig.twig_cli:main"

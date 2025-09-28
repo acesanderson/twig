@@ -3,13 +3,6 @@ Some guidelines for this Mixin:
 - all methods must have the signature (self, *args, **kwargs)
 - if the config file specifies a type for a command or flag, it must be one of: str, int, float, bool, and the method must handle that type accordingly
 - the method names must match the handler names in the config file exactly, a la "handle_history", "handle_wipe", etc.
-
-"handler": "handle_history"
-"handler": "handle_wipe"
-"handler": "handle_shell"
-"handler": "handle_last"
-"handler": "handle_get"
-"type": "int",
 """
 
 from typing import TYPE_CHECKING
@@ -187,9 +180,11 @@ class HandlerMixin:
         ## NOTE: we need to implement temperature, image, and other flags here.
         chat = self.flags["chat"]
         raw = self.flags["raw"]
+        preferred_model = self.flags["model"]
+        # Our switch logic
         match (chat, raw):
             case (False, False):  # One-off request, pretty print
-                model = Model(self.flags["model"])
+                model = Model(preferred_model)
                 prompt = Prompt(combined_query)
                 chain = Chain(prompt=prompt, model=model)
                 response = chain.run(verbose=self.verbosity)

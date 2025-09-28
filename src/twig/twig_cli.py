@@ -1,5 +1,6 @@
 from Chain.message.messagestore import MessageStore
 from Chain.chain.chain import Chain
+from Chain.model.model import Model
 from Chain.progress.verbosity import Verbosity
 from rich.console import Console
 from argparse import ArgumentParser
@@ -8,7 +9,12 @@ from twig.logs.logging_config import configure_logging
 from twig.handlers import HandlerMixin
 import sys
 
-logger = configure_logging(level=20)
+
+# Configs
+## logger = configure_logging(level=20) # INFO
+logger = configure_logging(level=30)  # WARNING
+## verbosity = Verbosity.COMPLETE
+default_verbosity = Verbosity.PROGRESS
 
 
 class TwigCLI(HandlerMixin):
@@ -28,10 +34,11 @@ class TwigCLI(HandlerMixin):
     - all handler methods (e.g., handle_history, handle_wipe, etc.) should be implemented in this class.
     """
 
-    def __init__(self, cache: bool = True, verbosity: Verbosity = Verbosity.COMPLETE):
+    def __init__(self, cache: bool = True, verbosity: Verbosity = default_verbosity):
         logger.info("Initializing TwigCLI")
         # Basic constants
         self.console = Console()
+        Model._console = self.console
         self.verbosity = verbosity
         # Set up message store
         Chain._message_store = MessageStore(
@@ -40,7 +47,6 @@ class TwigCLI(HandlerMixin):
         self.message_store = Chain._message_store
         # Set up cache
         if cache:
-            from Chain.model.model import Model
             from Chain.cache.cache import ChainCache
 
             Model._chain_cache = ChainCache(".twig_cache")
@@ -167,5 +173,9 @@ class TwigCLI(HandlerMixin):
         return None
 
 
+def main():
+    TwigCLI()
+
+
 if __name__ == "__main__":
-    cli = TwigCLI()
+    main()
