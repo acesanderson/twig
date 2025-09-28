@@ -1,4 +1,12 @@
 {
+  "positional_args": [
+    {
+      "dest": "query_input",
+      "type": "str",
+      "nargs": "*",
+      "help": "Query string to be executed."
+    }
+  ],
   "flags": [
     {
       "abbrev": "-m",

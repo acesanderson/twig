@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 class HandlerMixin:
-    def validate_handlers(self):
+    def _validate_handlers(self):
         self.config: dict  # TwigCLI has self.config (generated from ConfigLoader)
         for command in self.config["commands"]:
             handler_name = command.get("handler")
@@ -114,3 +114,59 @@ class HandlerMixin:
 
     def handle_get(self, index: int):
         pass
+
+    def query(self):
+        ...
+        # Create combined query.
+
+        # combined_query = "\n".join(
+        #     [
+        #         str(args.query) if args.query is not None else "",
+        #         str(context) if context is not None else "",
+        #         str(args.append) if args.append is not None else "",
+        #     ]
+        # )  # If these are nonetype, return empty string, not "None", \n for proper spacing.
+        # # Construct message to add to message store.
+        # if combined_query.strip():
+        #     if args.image:
+        #         mime_type, image_content = grab_image_from_clipboard()
+        #         imagemessage = create_image_message(
+        #             combined_query, mime_type, image_content
+        #         )
+        #         messagestore.append(imagemessage)
+        #     else:
+        #         from Chain.message.textmessage import TextMessage
+        #
+        #         textmessage = TextMessage(role="user", content=combined_query)
+        #         messagestore.append(textmessage)
+        # assert len(messagestore.messages) > 0, (
+        #     "Message store is empty. Please provide a query."
+        # )
+        # # Now to generate our responses.
+        # from Chain.progress.verbosity import Verbosity
+        #
+        # ## Option 1: If we want to chat, we pass the message history to the model.
+        # if args.chat:
+        #     # Construct a chain, which orchestrates persistence.
+        #     response = model.query(
+        #         query_input=messagestore.messages,
+        #         temperature=temperature,
+        #         verbose=Verbosity.SUMMARY,
+        #     )
+        #     if args.raw:
+        #         print(response)
+        #     else:
+        #         print_markdown(response)
+        # ## Option 2: If we just want a one-off query, we pass only the final message (i.e. combined_query).
+        # else:
+        #     response = model.query(
+        #         query_input=messagestore.messages[-1],
+        #         temperature=temperature,
+        #         verbose=Verbosity.SUMMARY,
+        #     )
+        #     # Save the response to message store.
+        #     messagestore.append(response.message)
+        #     if args.raw:
+        #         print(response)
+        #     else:
+        #         print_markdown(response)

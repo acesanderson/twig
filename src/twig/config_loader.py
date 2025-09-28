@@ -16,6 +16,12 @@ class ConfigLoader:
         """
         We need to rehydrate types from "str" to actual python str type, etc.
         """
+        # For all positional args
+        for pos_arg in config_dict["positional_args"]:
+            if "type" in pos_arg.keys():
+                type_name = pos_arg["type"]
+                pos_arg["type"] = self._get_type_object(type_name)
+
         # For all commands
         for command in config_dict["commands"]:
             if "type" in command.keys():
