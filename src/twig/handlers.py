@@ -17,8 +17,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Chain.message.imagemessage import ImageMessage
     from Chain.message.messagestore import MessageStore
-    from Chain.progress.verbosity import Verbosity
-    from Chain.result.response import Response
 
 
 class HandlerMixin:

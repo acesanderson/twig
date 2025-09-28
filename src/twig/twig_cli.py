@@ -67,6 +67,8 @@ class TwigCLI(HandlerMixin):
         """
         if isinstance(query_input, list):
             coerced_query_input = " ".join(query_input)
+        elif isinstance(query_input, str):
+            coerced_query_input = query_input
         return coerced_query_input
 
     def _setup_parser(self):
