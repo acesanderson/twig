@@ -1,7 +1,7 @@
-from Chain.message.messagestore import MessageStore
-from Chain.chain.chain import Chain
-from Chain.model.model import Model
-from Chain.progress.verbosity import Verbosity
+from conduit.message.messagestore import MessageStore
+from conduit.conduit.sync_conduit import SyncConduit as Conduit
+from conduit.model.model import Model
+from conduit.progress.verbosity import Verbosity
 from rich.console import Console
 from argparse import ArgumentParser
 from twig.config_loader import ConfigLoader
@@ -41,15 +41,15 @@ class TwigCLI(HandlerMixin):
         Model._console = self.console
         self.verbosity = verbosity
         # Set up message store
-        Chain._message_store = MessageStore(
+        Conduit._message_store = MessageStore(
             history_file=".twig_history.json", pruning=True, console=self.console
         )
-        self.message_store = Chain._message_store
+        self.message_store = Conduit._message_store
         # Set up cache
         if cache:
-            from Chain.cache.cache import ChainCache
+            from conduit.cache.cache import ConduitCache
 
-            Model._chain_cache = ChainCache(".twig_cache")
+            Model._conduit_cache = ConduitCache(".twig_cache")
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
         self.stdin: str = self._get_stdin()  # capture stdin if piped

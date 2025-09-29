@@ -10,7 +10,7 @@ requires-python = ">=3.12,<3.13.4"
 dependencies = [
     "rich",
     "pillow",
-    "Chain",
+    "conduit",
 ]
 
 # ── Hatchling (build) ──────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ split-on-trailing-comma = true
 # ── uv sources (local/editable deps) ───────────────────────────────────────────
 [tool.uv.sources]
 database-clients = { path = "../database-clients", editable = true }
-Chain = { path = "../Chain", editable = true }
+conduit = { path = "../conduit-project", editable = true }
 
 [tool.uv.workspace]
 members = [

@@ -8,8 +8,8 @@ Some guidelines for this Mixin:
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from Chain.message.imagemessage import ImageMessage
-    from Chain.message.messagestore import MessageStore
+    from conduit.message.imagemessage import ImageMessage
+    from conduit.message.messagestore import MessageStore
 
 
 class HandlerMixin:
@@ -83,7 +83,7 @@ class HandlerMixin:
         role = "user"
         text_content = combined_query
 
-        from Chain.message.imagemessage import ImageMessage
+        from conduit.message.imagemessage import ImageMessage
 
         imagemessage = ImageMessage(
             role=role,
@@ -155,11 +155,11 @@ class HandlerMixin:
             `cat "some_document.md" | twig -q "Look at this doc." -a " Please summarize."`
         """
         # Our imports
-        from Chain.chain.chain import Chain
-        from Chain.model.model import Model
-        from Chain.prompt.prompt import Prompt
-        from Chain.result.response import Response
-        from Chain.progress.verbosity import Verbosity
+        from conduit.conduit.sync_conduit import SyncConduit as Conduit
+        from conduit.model.model import Model
+        from conduit.prompt.prompt import Prompt
+        from conduit.result.response import Response
+        from conduit.progress.verbosity import Verbosity
         import sys
 
         # Type hints since mixins confuse IDEs
@@ -186,8 +186,8 @@ class HandlerMixin:
             case (False, False):  # One-off request, pretty print
                 model = Model(preferred_model)
                 prompt = Prompt(combined_query)
-                chain = Chain(prompt=prompt, model=model)
-                response = chain.run(verbose=self.verbosity)
+                conduit = Conduit(prompt=prompt, model=model)
+                response = conduit.run(verbose=self.verbosity)
                 assert isinstance(response, Response), (
                     "Response is not of type Response"
                 )
@@ -196,8 +196,8 @@ class HandlerMixin:
             case (False, True):  # One-off request, raw print
                 model = Model(self.flags["model"])
                 prompt = Prompt(combined_query)
-                chain = Chain(prompt=prompt, model=model)
-                response = chain.run(verbose=self.verbosity)
+                conduit = Conduit(prompt=prompt, model=model)
+                response = conduit.run(verbose=self.verbosity)
                 assert isinstance(response, Response), (
                     "Response is not of type Response"
                 )
