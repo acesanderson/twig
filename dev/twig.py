@@ -1,4 +1,7 @@
 """
+!!! LEGACY IMPLEMENTATION -- STILL SOME TO MIGRATE TO twig_cli !!!
+
+
 This adapts Chain framework to a lightweight but flexible command line interface.
 With twig, you can query LLMs, and do crazy stuff with pipes and tees.
 """
