@@ -34,6 +34,8 @@ class TwigCLI(HandlerMixin):
     - all handler methods (e.g., handle_history, handle_wipe, etc.) should be implemented in this class.
     """
 
+    description: str = "Twig: The LLM CLI"
+
     def __init__(self, cache: bool = True, verbosity: Verbosity = default_verbosity):
         logger.info("Initializing TwigCLI")
         # Basic constants
@@ -56,8 +58,12 @@ class TwigCLI(HandlerMixin):
         # Setup parser and parse args
         self.flags: dict = {}  # This will hold all the flag values after parsing
         self.parser: ArgumentParser = self._setup_parser()
+        # If no args, print help and exit
+        if len(sys.argv) == 1 and not self.stdin:
+            self.parser.print_help(sys.stderr)
+            sys.exit(1)
+        # Parse args
         self._parse_args()
-        # We will always have self.query_input at this point; it may be a list or string
 
     def _get_stdin(self) -> str:
         """
@@ -82,6 +88,7 @@ class TwigCLI(HandlerMixin):
         Setup the argument parser based on the configuration.
         """
         parser = ArgumentParser()
+        parser.description = TwigCLI.description
         self.attr_mapping = {}
         self.command_mapping = {}
 
