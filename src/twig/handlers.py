@@ -5,11 +5,18 @@ Some guidelines for this Mixin:
 - the method names must match the handler names in the config file exactly, a la "handle_history", "handle_wipe", etc.
 """
 
-from typing import TYPE_CHECKING
+from conduit.sync import Conduit, Model, Verbosity, Prompt, Response, Verbosity
+from conduit.cache.cache import ConduitCache
+from conduit.message.messagestore import MessageStore
+from pathlib import Path
+from rich.markdown import Markdown
+from rich.console import Console
+import sys
 
-if TYPE_CHECKING:
-    from conduit.message.imagemessage import ImageMessage
-    from conduit.message.messagestore import MessageStore
+
+DEFAULT_VERBOSITY = Verbosity.PROGRESS
+MESSAGE_STORE_HISTORY_FILE = Path(__file__).parent / ".twig_history.json"
+CACHE_FILE = Path(__file__).parent / ".twig_cache.sqlite"
 
 
 class HandlerMixin:
@@ -31,8 +38,6 @@ class HandlerMixin:
         """
         Prints formatted markdown to the console.
         """
-        from rich.markdown import Markdown
-        from rich.console import Console
 
         # Create a Markdown object
         border = "-" * 100
@@ -71,7 +76,6 @@ class HandlerMixin:
             return mime_type, image_content
         else:
             self.console.print("No image detected.", style="red")
-            import sys
 
             sys.exit()
 
@@ -98,9 +102,7 @@ class HandlerMixin:
         """
         View message history and exit.
         """
-        import sys
-
-        self.message_store.view_history()
+        Conduit._message_store.view_history()
         sys.exit()
 
     def handle_wipe(self):
@@ -114,7 +116,7 @@ class HandlerMixin:
             default=False,
         )
         if confirm:
-            self.message_store.clear()
+            Conduit._message_store.clear()
             self.console.print("[green]Message history wiped.[/green]")
         else:
             self.console.print("[yellow]Wipe cancelled.[/yellow]")
@@ -129,8 +131,7 @@ class HandlerMixin:
         import sys
 
         # Get last message
-        self.message_store: MessageStore
-        last_message = self.message_store.last()
+        last_message = Conduit._message_store.last()
         # If no messages, inform user
         if not last_message:
             self.console.print("[red]No messages in history.[/red]")
@@ -154,13 +155,12 @@ class HandlerMixin:
         Maximal usage:
             `cat "some_document.md" | twig -q "Look at this doc." -a " Please summarize."`
         """
-        # Our imports
-        from conduit.conduit.sync_conduit import SyncConduit as Conduit
-        from conduit.model.model import Model
-        from conduit.prompt.prompt import Prompt
-        from conduit.result.response import Response
-        from conduit.progress.verbosity import Verbosity
-        import sys
+        # Configs
+        MESSAGE_STORE = MessageStore(
+            history_file=MESSAGE_STORE_HISTORY_FILE, pruning=True
+        )
+        Conduit._message_store = MESSAGE_STORE
+        Model._conduit_cache = ConduitCache(db_path=CACHE_FILE)
 
         # Type hints since mixins confuse IDEs
         self.flags: dict

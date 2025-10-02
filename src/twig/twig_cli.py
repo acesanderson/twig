@@ -1,20 +1,14 @@
-from conduit.message.messagestore import MessageStore
-from conduit.conduit.sync_conduit import SyncConduit as Conduit
-from conduit.model.model import Model
-from conduit.progress.verbosity import Verbosity
 from rich.console import Console
 from argparse import ArgumentParser
 from twig.config_loader import ConfigLoader
 from twig.logs.logging_config import configure_logging
 from twig.handlers import HandlerMixin
+from conduit.progress.verbosity import Verbosity
 import sys
 
-
-# Configs
-## logger = configure_logging(level=20) # INFO
 logger = configure_logging(level=30)  # WARNING
-## verbosity = Verbosity.COMPLETE
-default_verbosity = Verbosity.PROGRESS
+console = Console()
+DEFAULT_VERBOSITY = Verbosity.COMPLETE
 
 
 class TwigCLI(HandlerMixin):
@@ -22,7 +16,6 @@ class TwigCLI(HandlerMixin):
     Main class for the Twig CLI application.
     Combines argument parsing, configuration loading, and command handling.
     Attributes:
-    - messagestore: Instance of MessageStore to manage messages.
     - console: Instance of rich.console.Console for rich text output.
     - config: Configuration dictionary loaded from ConfigLoader.
     - attr_mapping: Maps command-line argument names to internal attribute names.
@@ -36,22 +29,13 @@ class TwigCLI(HandlerMixin):
 
     description: str = "Twig: The LLM CLI"
 
-    def __init__(self, cache: bool = True, verbosity: Verbosity = default_verbosity):
+    def __init__(self, cache: bool = True, verbosity: Verbosity = DEFAULT_VERBOSITY):
         logger.info("Initializing TwigCLI")
         # Basic constants
-        self.console = Console()
-        Model._console = self.console
-        self.verbosity = verbosity
-        # Set up message store
-        Conduit._message_store = MessageStore(
-            history_file=".twig_history.json", pruning=True, console=self.console
-        )
-        self.message_store = Conduit._message_store
+        self.console = console  # rich console for output
+        self.verbosity = verbosity  # verbosity level for LLM responses
+        self.cache = cache  # whether to use caching for LLM responses
         # Set up cache
-        if cache:
-            from conduit.cache.cache import ConduitCache
-
-            Model._conduit_cache = ConduitCache(".twig_cache")
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
         self.stdin: str = self._get_stdin()  # capture stdin if piped

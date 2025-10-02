@@ -44,7 +44,7 @@ def get_logger(name=None, level=None):
 def configure_logging(
     level: int = logging.INFO,
     console=True,
-):
+) -> logging.Logger:
     """
     Configure the root logging settings for the entire application.
     Call this once at application startup.
