@@ -13,10 +13,14 @@ from rich.markdown import Markdown
 from rich.console import Console
 import sys
 
-
+# Constants
 DEFAULT_VERBOSITY = Verbosity.PROGRESS
-MESSAGE_STORE_HISTORY_FILE = Path(__file__).parent / ".twig_history.json"
 CACHE_FILE = Path(__file__).parent / ".twig_cache.sqlite"
+MESSAGE_STORE_HISTORY_FILE = Path(__file__).parent / ".twig_history.json"
+MESSAGE_STORE = MessageStore(history_file=MESSAGE_STORE_HISTORY_FILE, pruning=True)
+# Assign our singletons
+Conduit._message_store = MESSAGE_STORE
+Model._conduit_cache = ConduitCache(db_path=CACHE_FILE)
 
 
 class HandlerMixin:
@@ -155,13 +159,6 @@ class HandlerMixin:
         Maximal usage:
             `cat "some_document.md" | twig -q "Look at this doc." -a " Please summarize."`
         """
-        # Configs
-        MESSAGE_STORE = MessageStore(
-            history_file=MESSAGE_STORE_HISTORY_FILE, pruning=True
-        )
-        Conduit._message_store = MESSAGE_STORE
-        Model._conduit_cache = ConduitCache(db_path=CACHE_FILE)
-
         # Type hints since mixins confuse IDEs
         self.flags: dict
         self.stdin: str
