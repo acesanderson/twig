@@ -1511,6 +1511,7 @@ name = "twig"
 version = "1.5"
 source = { editable = "." }
 dependencies = [
+    { name = "click" },
     { name = "conduit" },
     { name = "pillow" },
     { name = "rich" },
@@ -1518,6 +1519,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "click", specifier = ">=8.3.0" },
     { name = "conduit", editable = "../conduit-project" },
     { name = "pillow" },
     { name = "rich" },

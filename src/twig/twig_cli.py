@@ -1,8 +1,21 @@
+"""
+Twig is our conduit library as a CLI application.
+
+Customize the query_function to specialize for various prompts / workflows while retaining archival and other functionalities.
+
+To customize:
+1. Define your own query function matching the QueryFunctionProtocol signature.
+2. Pass your custom function to the Twig class upon instantiation.
+
+This allows you to tailor the behavior of Twig while leveraging its existing features.
+"""
+
 from rich.console import Console
 from argparse import ArgumentParser
 from twig.config_loader import ConfigLoader
 from twig.logs.logging_config import configure_logging
 from twig.handlers import HandlerMixin
+from twig.query_function import QueryFunctionProtocol, default_query_function
 from conduit.progress.verbosity import Verbosity
 import sys
 
@@ -11,7 +24,7 @@ console = Console()
 DEFAULT_VERBOSITY = Verbosity.COMPLETE
 
 
-class TwigCLI(HandlerMixin):
+class Twig(HandlerMixin):
     """
     Main class for the Twig CLI application.
     Combines argument parsing, configuration loading, and command handling.
@@ -20,6 +33,14 @@ class TwigCLI(HandlerMixin):
     - config: Configuration dictionary loaded from ConfigLoader.
     - attr_mapping: Maps command-line argument names to internal attribute names.
     - command_mapping: Maps command-line argument names to their respective handler method names.
+    - flags: Dictionary to hold parsed flag values.
+    - parser: ArgumentParser instance for parsing command-line arguments.
+    - args: Parsed arguments from the command line.
+    - stdin: Captured standard input if piped.
+    - query_function: Function to handle queries, adhering to QueryFunctionProtocol.
+    - cache: Boolean indicating whether to use caching for LLM responses.
+    - verbosity: Verbosity level for LLM responses.
+    - description: Description of the CLI application.
     Methods:
     - setup_parser(): Sets up the argument parser based on the loaded configuration.
     Methods from HandlerMixin:
@@ -29,12 +50,20 @@ class TwigCLI(HandlerMixin):
 
     description: str = "Twig: The LLM CLI"
 
-    def __init__(self, cache: bool = True, verbosity: Verbosity = DEFAULT_VERBOSITY):
+    def __init__(
+        self,
+        query_function: QueryFunctionProtocol = default_query_function,
+        cache: bool = True,
+        verbosity: Verbosity = DEFAULT_VERBOSITY,
+    ):
         logger.info("Initializing TwigCLI")
         # Basic constants
-        self.console = console  # rich console for output
-        self.verbosity = verbosity  # verbosity level for LLM responses
-        self.cache = cache  # whether to use caching for LLM responses
+        self.console: Console = console  # rich console for output
+        self.verbosity: Verbosity = verbosity  # verbosity level for LLM responses
+        self.cache: bool = cache  # whether to use caching for LLM responses
+        self.query_function: QueryFunctionProtocol = (
+            query_function  # function to handle queries
+        )
         # Set up cache
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
@@ -63,7 +92,7 @@ class TwigCLI(HandlerMixin):
         """
         if isinstance(query_input, list):
             coerced_query_input = " ".join(query_input)
-        elif isinstance(query_input, str):
+        else:
             coerced_query_input = query_input
         return coerced_query_input
 
@@ -72,7 +101,7 @@ class TwigCLI(HandlerMixin):
         Setup the argument parser based on the configuration.
         """
         parser = ArgumentParser()
-        parser.description = TwigCLI.description
+        parser.description = Twig.description
         self.attr_mapping = {}
         self.command_mapping = {}
 
@@ -137,7 +166,7 @@ class TwigCLI(HandlerMixin):
 
         # If no commands were executed and we have query input, process it
         if self.args.query_input:
-            self.query()
+            self.query_handler()
 
     # Debugging methods
     def _print_all_attrs(self, pretty: bool = True):
@@ -165,7 +194,7 @@ class TwigCLI(HandlerMixin):
 
 
 def main():
-    TwigCLI()
+    Twig()
 
 
 if __name__ == "__main__":

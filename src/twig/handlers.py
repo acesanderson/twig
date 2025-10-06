@@ -150,7 +150,7 @@ class HandlerMixin:
     def handle_get(self, index: int):
         pass
 
-    def query(self):
+    def query_handler(self):
         """
         Handle a query by combining query input, context, and append, then sending to model.
 
@@ -164,14 +164,12 @@ class HandlerMixin:
         self.stdin: str
         self.verbosity: Verbosity
 
-        # Create combined query: query + context + append
-        query_input = self.flags.get("query_input", "")
-        context = f"<context>{self.stdin}</context>" if self.stdin else ""
-        append = self.flags.get("append") or ""
-
-        combined_query = "\n\n".join(
-            part for part in (query_input, context, append) if part
-        )
+        # Assemble the parts of the query
+        inputs = {
+            "query_input": self.flags.get("query_input", ""),
+            "context": f"<context>{self.stdin}</context>" if self.stdin else "",
+            "append": self.flags.get("append") or "",
+        }
 
         # Grab our flags
         ## NOTE: we need to implement temperature, image, and other flags here.
@@ -181,25 +179,26 @@ class HandlerMixin:
         # Our switch logic
         match (chat, raw):
             case (False, False):  # One-off request, pretty print
-                model = Model(preferred_model)
-                prompt = Prompt(combined_query)
-                conduit = Conduit(prompt=prompt, model=model)
-                response = conduit.run(verbose=self.verbosity)
-                assert isinstance(response, Response), (
-                    "Response is not of type Response"
+                response = self.query_function(
+                    inputs, preferred_model=preferred_model, nopersist=True
                 )
                 self.print_markdown(str(response.content))
                 sys.exit()
             case (False, True):  # One-off request, raw print
-                model = Model(self.flags["model"])
-                prompt = Prompt(combined_query)
-                conduit = Conduit(prompt=prompt, model=model)
-                response = conduit.run(verbose=self.verbosity)
-                assert isinstance(response, Response), (
-                    "Response is not of type Response"
+                response = self.query_function(
+                    inputs, preferred_model=preferred_model, nopersist=True
                 )
                 print(response)
+                sys.exit()
             case (True, False):  # Chat (with history), pretty print
-                ...
+                response = self.query_function(
+                    inputs, preferred_model=preferred_model, nopersist=False
+                )
+                print(response)
+                sys.exit()
             case (True, True):  # Chat (with history), raw print
-                ...
+                response = self.query_function(
+                    inputs, preferred_model=preferred_model, nopersist=False
+                )
+                print(response)
+                sys.exit()
