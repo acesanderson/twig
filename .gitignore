@@ -13,3 +13,4 @@ Twig.egg-info/
 *.sqlite
 *.json
 !args.json
+.twig_history.json

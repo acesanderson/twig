@@ -176,41 +176,45 @@ class HandlerMixin:
         chat = self.flags["chat"]
         raw = self.flags["raw"]
         preferred_model = self.flags["model"]
-        # Our switch logic
-        match (chat, raw):
-            case (False, False):  # One-off request, pretty print
-                response = self.query_function(
-                    inputs,
-                    preferred_model=preferred_model,
-                    verbose=self.verbosity,
-                    nopersist=True,
-                )
-                self.print_markdown(str(response.content))
-                sys.exit()
-            case (False, True):  # One-off request, raw print
-                response = self.query_function(
-                    inputs,
-                    preferred_model=preferred_model,
-                    verbose=self.verbosity,
-                    nopersist=True,
-                )
-                print(response)
-                sys.exit()
-            case (True, False):  # Chat (with history), pretty print
-                response = self.query_function(
-                    inputs,
-                    preferred_model=preferred_model,
-                    verbose=self.verbosity,
-                    nopersist=False,
-                )
-                print(response)
-                sys.exit()
-            case (True, True):  # Chat (with history), raw print
-                response = self.query_function(
-                    inputs,
-                    preferred_model=preferred_model,
-                    verbose=self.verbosity,
-                    nopersist=False,
-                )
-                print(response)
-                sys.exit()
+        # Start our spinner
+        with self.console.status(
+            "[bold green]Thinking...[/bold green]", spinner="dots"
+        ):
+            # Our switch logic
+            match (chat, raw):
+                case (False, False):  # One-off request, pretty print
+                    response = self.query_function(
+                        inputs,
+                        preferred_model=preferred_model,
+                        verbose=self.verbosity,
+                        nopersist=True,
+                    )
+                    self.print_markdown(str(response.content))
+                    sys.exit()
+                case (False, True):  # One-off request, raw print
+                    response = self.query_function(
+                        inputs,
+                        preferred_model=preferred_model,
+                        verbose=self.verbosity,
+                        nopersist=True,
+                    )
+                    print(response)
+                    sys.exit()
+                case (True, False):  # Chat (with history), pretty print
+                    response = self.query_function(
+                        inputs,
+                        preferred_model=preferred_model,
+                        verbose=self.verbosity,
+                        nopersist=False,
+                    )
+                    print(response)
+                    sys.exit()
+                case (True, True):  # Chat (with history), raw print
+                    response = self.query_function(
+                        inputs,
+                        preferred_model=preferred_model,
+                        verbose=self.verbosity,
+                        nopersist=False,
+                    )
+                    print(response)
+                    sys.exit()

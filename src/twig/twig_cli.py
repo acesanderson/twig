@@ -1,4 +1,4 @@
-from twig.twig import Twig
+from twig.twig_class import Twig
 
 
 def main():
