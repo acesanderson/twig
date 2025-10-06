@@ -11,3 +11,5 @@ Twig.egg-info/
 *.log
 .twig_cache
 *.sqlite
+*.json
+!args.json

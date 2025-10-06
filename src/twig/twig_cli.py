@@ -19,9 +19,15 @@ from twig.query_function import QueryFunctionProtocol, default_query_function
 from conduit.progress.verbosity import Verbosity
 import sys
 
+# Set up logging
 logger = configure_logging(level=30)  # WARNING
-console = Console()
+# Defaults
+DEFAULT_QUERY_FUNCTION = default_query_function
 DEFAULT_VERBOSITY = Verbosity.COMPLETE
+DEFAULT_DESCRIPTION = "Twig: The LLM CLI"
+DEFAULT_PREFERRED_MODEL = "claude"
+DEFAULT_CONSOLE = Console()
+CACHE_ENABLED = True
 
 
 class Twig(HandlerMixin):
@@ -48,25 +54,33 @@ class Twig(HandlerMixin):
     - all handler methods (e.g., handle_history, handle_wipe, etc.) should be implemented in this class.
     """
 
-    description: str = "Twig: The LLM CLI"
-
     def __init__(
         self,
-        query_function: QueryFunctionProtocol = default_query_function,
-        cache: bool = True,
+        query_function: QueryFunctionProtocol = DEFAULT_QUERY_FUNCTION,
         verbosity: Verbosity = DEFAULT_VERBOSITY,
+        description: str = DEFAULT_DESCRIPTION,
+        preferred_model: str = DEFAULT_PREFERRED_MODEL,
+        console: Console = DEFAULT_CONSOLE,
+        cache: bool = CACHE_ENABLED,
     ):
         logger.info("Initializing TwigCLI")
-        # Basic constants
-        self.console: Console = console  # rich console for output
-        self.verbosity: Verbosity = verbosity  # verbosity level for LLM responses
-        self.cache: bool = cache  # whether to use caching for LLM responses
+        # Configs
         self.query_function: QueryFunctionProtocol = (
             query_function  # function to handle queries
         )
+        self.verbosity: Verbosity = verbosity  # verbosity level for LLM responses
+        self.description: str = description  # description of the CLI application
+        self.preferred_model: str = preferred_model  # default LLM model
+        self.console: Console = console  # rich console for output
+        self.cache: bool = cache  # whether to use caching for LLM responses
         # Set up cache
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
+
+    def run(self):
+        """
+        Run the CLI application.
+        """
         self.stdin: str = self._get_stdin()  # capture stdin if piped
         # Setup parser and parse args
         self.flags: dict = {}  # This will hold all the flag values after parsing
@@ -101,7 +115,7 @@ class Twig(HandlerMixin):
         Setup the argument parser based on the configuration.
         """
         parser = ArgumentParser()
-        parser.description = Twig.description
+        parser.description = self.description
         self.attr_mapping = {}
         self.command_mapping = {}
 
@@ -194,7 +208,8 @@ class Twig(HandlerMixin):
 
 
 def main():
-    Twig()
+    twig = Twig()
+    twig.run()
 
 
 if __name__ == "__main__":

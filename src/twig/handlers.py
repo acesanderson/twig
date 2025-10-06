@@ -180,25 +180,37 @@ class HandlerMixin:
         match (chat, raw):
             case (False, False):  # One-off request, pretty print
                 response = self.query_function(
-                    inputs, preferred_model=preferred_model, nopersist=True
+                    inputs,
+                    preferred_model=preferred_model,
+                    verbose=self.verbosity,
+                    nopersist=True,
                 )
                 self.print_markdown(str(response.content))
                 sys.exit()
             case (False, True):  # One-off request, raw print
                 response = self.query_function(
-                    inputs, preferred_model=preferred_model, nopersist=True
+                    inputs,
+                    preferred_model=preferred_model,
+                    verbose=self.verbosity,
+                    nopersist=True,
                 )
                 print(response)
                 sys.exit()
             case (True, False):  # Chat (with history), pretty print
                 response = self.query_function(
-                    inputs, preferred_model=preferred_model, nopersist=False
+                    inputs,
+                    preferred_model=preferred_model,
+                    verbose=self.verbosity,
+                    nopersist=False,
                 )
                 print(response)
                 sys.exit()
             case (True, True):  # Chat (with history), raw print
                 response = self.query_function(
-                    inputs, preferred_model=preferred_model, nopersist=False
+                    inputs,
+                    preferred_model=preferred_model,
+                    verbose=self.verbosity,
+                    nopersist=False,
                 )
                 print(response)
                 sys.exit()
