@@ -17,17 +17,20 @@ from twig.logs.logging_config import configure_logging
 from twig.handlers import HandlerMixin
 from twig.query_function import QueryFunctionProtocol, default_query_function
 from conduit.progress.verbosity import Verbosity
+from pathlib import Path
 import sys
 
 # Set up logging
 logger = configure_logging(level=30)  # WARNING
 # Defaults
+DEFAULT_NAME = "twig"
+DEFAULT_DESCRIPTION = "Twig: The LLM CLI"
 DEFAULT_QUERY_FUNCTION = default_query_function
 DEFAULT_VERBOSITY = Verbosity.COMPLETE
-DEFAULT_DESCRIPTION = "Twig: The LLM CLI"
 DEFAULT_PREFERRED_MODEL = "claude"
 DEFAULT_CONSOLE = Console()
-CACHE_ENABLED = True
+DEFAULT_CACHE_SETTING = True
+DEFAULT_PERSISTENT_SETTING = True
 
 
 class Twig(HandlerMixin):
@@ -35,6 +38,10 @@ class Twig(HandlerMixin):
     Main class for the Twig CLI application.
     Combines argument parsing, configuration loading, and command handling.
     Attributes:
+    - name: Name of the CLI application.
+    - description: Description of the CLI application.
+    - verbosity: Verbosity level for LLM responses.
+    - preferred_model: Default LLM model to use.
     - console: Instance of rich.console.Console for rich text output.
     - config: Configuration dictionary loaded from ConfigLoader.
     - attr_mapping: Maps command-line argument names to internal attribute names.
@@ -45,8 +52,6 @@ class Twig(HandlerMixin):
     - stdin: Captured standard input if piped.
     - query_function: Function to handle queries, adhering to QueryFunctionProtocol.
     - cache: Boolean indicating whether to use caching for LLM responses.
-    - verbosity: Verbosity level for LLM responses.
-    - description: Description of the CLI application.
     Methods:
     - setup_parser(): Sets up the argument parser based on the loaded configuration.
     Methods from HandlerMixin:
@@ -56,24 +61,53 @@ class Twig(HandlerMixin):
 
     def __init__(
         self,
+        name: str = "twig",
+        description: str = DEFAULT_DESCRIPTION,
         query_function: QueryFunctionProtocol = DEFAULT_QUERY_FUNCTION,
         verbosity: Verbosity = DEFAULT_VERBOSITY,
-        description: str = DEFAULT_DESCRIPTION,
         preferred_model: str = DEFAULT_PREFERRED_MODEL,
         console: Console = DEFAULT_CONSOLE,
-        cache: bool = CACHE_ENABLED,
+        cache: bool = DEFAULT_CACHE_SETTING,
+        persistent: bool = DEFAULT_PERSISTENT_SETTING,
     ):
         logger.info("Initializing TwigCLI")
-        # Configs
+        self.name: str = name  # Name of the CLI application
+        self.description: str = description  # description of the CLI application
+        # Query function -- must adhere to QueryFunctionProtocol
         self.query_function: QueryFunctionProtocol = (
             query_function  # function to handle queries
         )
+        assert isinstance(query_function, QueryFunctionProtocol), (
+            "query_function must adhere to QueryFunctionProtocol"
+        )
+        # Configs
         self.verbosity: Verbosity = verbosity  # verbosity level for LLM responses
-        self.description: str = description  # description of the CLI application
         self.preferred_model: str = preferred_model  # default LLM model
         self.console: Console = console  # rich console for output
         self.cache: bool = cache  # whether to use caching for LLM responses
-        # Set up cache
+        # Get XDG paths
+        self.history_file: Path
+        self.config_dir: Path
+        self.cache_file: Path
+        self.history_file, self.config_dir, self.cache_file = (
+            self._construct_xdg_paths()
+        )
+        # Persistence
+        if persistent:
+            from conduit.message.messagestore import MessageStore
+            from conduit.sync import Conduit
+
+            self.history_file.parent.mkdir(parents=True, exist_ok=True)
+            message_store = MessageStore(history_file=self.history_file)
+            Conduit._message_store = message_store
+        # Cache
+        if cache:
+            from conduit.sync import Model
+            from conduit.cache.cache import ConduitCache
+
+            self.cache_file.parent.mkdir(parents=True, exist_ok=True)
+            Model._conduit_cache = ConduitCache(db_path=self.cache_file)
+        # Set up config
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
 
@@ -91,6 +125,23 @@ class Twig(HandlerMixin):
             sys.exit(1)
         # Parse args
         self._parse_args()
+
+    def _construct_xdg_paths(self) -> tuple[Path, Path, Path]:
+        """
+        Construct XDG-compliant paths for history, config, and cache files.
+        The name (self.name) is used as the application directory for each.
+
+        Returns a tuple of Paths: (history_file, config_file, cache_file)
+
+        Note: config_file is not currently used but reserved for future use.
+        """
+        from xdg_base_dirs import xdg_data_home, xdg_config_home, xdg_cache_home
+
+        history_file = xdg_data_home() / self.name / "history.json"
+        config_file = xdg_config_home() / self.name / "config.yaml"
+        cache_file = xdg_cache_home() / self.name / "cache.sqlite"
+
+        return history_file, config_file, cache_file
 
     def _get_stdin(self) -> str:
         """

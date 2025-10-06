@@ -1515,6 +1515,7 @@ dependencies = [
     { name = "conduit" },
     { name = "pillow" },
     { name = "rich" },
+    { name = "xdg-base-dirs" },
 ]
 
 [package.metadata]
@@ -1523,6 +1524,7 @@ requires-dist = [
     { name = "conduit", editable = "../conduit-project" },
     { name = "pillow" },
     { name = "rich" },
+    { name = "xdg-base-dirs", specifier = ">=6.0.2" },
 ]
 
 [[package]]
@@ -1615,6 +1617,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/71/57/1616c8274c3442d802621abf5deb230771c7a0fec9414cb6763900eb3868/uvicorn-0.37.0.tar.gz", hash = "sha256:4115c8add6d3fd536c8ee77f0e14a7fd2ebba939fed9b02583a97f80648f9e13", size = 80367, upload-time = "2025-09-23T13:33:47.486Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/cd/584a2ceb5532af99dd09e50919e3615ba99aa127e9850eafe5f31ddfdb9a/uvicorn-0.37.0-py3-none-any.whl", hash = "sha256:913b2b88672343739927ce381ff9e2ad62541f9f8289664fa1d1d3803fa2ce6c", size = 67976, upload-time = "2025-09-23T13:33:45.842Z" },
+]
+
+[[package]]
+name = "xdg-base-dirs"
+version = "6.0.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/bf/d0/bbe05a15347538aaf9fa5b51ac3b97075dfb834931fcb77d81fbdb69e8f6/xdg_base_dirs-6.0.2.tar.gz", hash = "sha256:950504e14d27cf3c9cb37744680a43bf0ac42efefc4ef4acf98dc736cab2bced", size = 4085, upload-time = "2024-10-19T14:35:08.114Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fc/03/030b47fd46b60fc87af548e57ff59c2ca84b2a1dadbe721bb0ce33896b2e/xdg_base_dirs-6.0.2-py3-none-any.whl", hash = "sha256:3c01d1b758ed4ace150ac960ac0bd13ce4542b9e2cdf01312dcda5012cfebabe", size = 4747, upload-time = "2024-10-19T14:35:05.931Z" },
 ]
 
 [[package]]

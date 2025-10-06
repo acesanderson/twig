@@ -4,10 +4,11 @@ Define your own for customization.
 """
 
 from conduit.sync import Prompt, Model, Conduit, Response, Verbosity
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
 # First, our protocol
+@runtime_checkable
 class QueryFunctionProtocol(Protocol):
     """
     Protocol for a query function. Customized query functions should match this signature.

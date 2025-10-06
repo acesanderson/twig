@@ -12,6 +12,7 @@ dependencies = [
     "pillow",
     "conduit",
     "click>=8.3.0",
+    "xdg-base-dirs>=6.0.2",
 ]
 
 # ── Hatchling (build) ──────────────────────────────────────────────────────────
