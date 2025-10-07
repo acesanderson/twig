@@ -21,7 +21,9 @@ from pathlib import Path
 import sys
 
 # Set up logging
-logger = configure_logging(level=30)  # WARNING
+# logger = configure_logging(level=30)  # WARNING
+logger = configure_logging(level=20)  # INFO
+# logger = configure_logging(level=10)  # DEBUG
 # Defaults
 DEFAULT_NAME = "twig"
 DEFAULT_DESCRIPTION = "Twig: The LLM CLI"
@@ -94,20 +96,27 @@ class Twig(HandlerMixin):
         )
         # Persistence
         if persistent:
+            logger.info(f"Using persistent history at {self.history_file}")
             from conduit.message.messagestore import MessageStore
             from conduit.sync import Conduit
 
             self.history_file.parent.mkdir(parents=True, exist_ok=True)
             message_store = MessageStore(history_file=self.history_file)
-            Conduit._message_store = message_store
+            Conduit.message_store = message_store
+        else:
+            logger.info("Using in-memory history (no persistence)")
         # Cache
         if cache:
+            logger.info(f"Using cache at {self.cache_file}")
             from conduit.sync import Model
             from conduit.cache.cache import ConduitCache
 
             self.cache_file.parent.mkdir(parents=True, exist_ok=True)
-            Model._conduit_cache = ConduitCache(db_path=self.cache_file)
+            Model.conduit_cache = ConduitCache(db_path=self.cache_file)
+        else:
+            logger.info("Caching disabled")
         # Set up config
+        self.parser: ArgumentParser | None = None
         self.config: dict = ConfigLoader().config
         self._validate_handlers()  # from HandlerMixin
 
@@ -115,10 +124,11 @@ class Twig(HandlerMixin):
         """
         Run the CLI application.
         """
+        logger.info("Running TwigCLI")
         self.stdin: str = self._get_stdin()  # capture stdin if piped
         # Setup parser and parse args
         self.flags: dict = {}  # This will hold all the flag values after parsing
-        self.parser: ArgumentParser = self._setup_parser()
+        self.parser = self._setup_parser()
         # If no args, print help and exit
         if len(sys.argv) == 1 and not self.stdin:
             self.parser.print_help(sys.stderr)
@@ -165,12 +175,14 @@ class Twig(HandlerMixin):
         """
         Setup the argument parser based on the configuration.
         """
+        logger.info("Setting up argument parser")
         parser = ArgumentParser()
         parser.description = self.description
         self.attr_mapping = {}
         self.command_mapping = {}
 
         # Handle positional args (i.e. query string if provided)
+        logger.info("Adding positional arguments to parser")
         for pos_arg in self.config.get("positional_args", []):
             dest = pos_arg.pop("dest")
             self.attr_mapping[dest] = dest
@@ -180,7 +192,7 @@ class Twig(HandlerMixin):
             )
 
         # Handle flags
-        # Handle flags
+        logger.info("Adding flags to parser")
         for flag in self.config["flags"]:
             abbrev = flag.pop("abbrev", None)
             name = flag.pop("name")
@@ -191,6 +203,7 @@ class Twig(HandlerMixin):
             parser.add_argument(*args, **flag)
 
         # Handle commands
+        logger.info("Adding commands to parser")
         command_group = parser.add_mutually_exclusive_group()
         for command in self.config["commands"]:
             handler = command.pop("handler")
@@ -208,9 +221,12 @@ class Twig(HandlerMixin):
         """
         Parse arguments and execute commands or prepare for query processing.
         """
+        logger.info("Parsing arguments")
         self.args = self.parser.parse_args()
+        logger.debug(f"Parsed args: {self.args}")
 
         # Create flags dictionary
+        logger.info("Creating flags dictionary")
         self.flags = {}
         for arg_name, attr_name in self.attr_mapping.items():
             if hasattr(self.args, arg_name):
@@ -220,6 +236,7 @@ class Twig(HandlerMixin):
         self.flags["query_input"] = self._coerce_query_input(self.flags["query_input"])
 
         # Check if any commands were specified and execute them
+        logger.info("Checking for commands to execute")
         for arg_name, handler_name in self.command_mapping.items():
             if getattr(self.args, arg_name, False):
                 handler = getattr(self, handler_name)
@@ -230,6 +247,7 @@ class Twig(HandlerMixin):
                 return
 
         # If no commands were executed and we have query input, process it
+        logger.info("No commands executed; checking for query input")
         if self.args.query_input:
             self.query_handler()
 
@@ -238,6 +256,7 @@ class Twig(HandlerMixin):
         """
         Debugging method to print all attributes of the instance.
         """
+        logger.info("Printing all attributes of the instance")
         if pretty:
             from rich.pretty import Pretty
 
@@ -252,6 +271,7 @@ class Twig(HandlerMixin):
         """
         Given a command-line argument name, return the corresponding handler method.
         """
+        logger.info(f"Getting handler for command: {command_name}")
         handler_name = self.command_mapping.get(command_name)
         if handler_name and hasattr(self, handler_name):
             return getattr(self, handler_name)

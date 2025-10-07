@@ -5,26 +5,21 @@ Some guidelines for this Mixin:
 - the method names must match the handler names in the config file exactly, a la "handle_history", "handle_wipe", etc.
 """
 
-from conduit.sync import Conduit, Model, Verbosity, Prompt, Response, Verbosity
-from conduit.cache.cache import ConduitCache
-from conduit.message.messagestore import MessageStore
-from pathlib import Path
+from twig.logs.logging_config import get_logger
+from conduit.sync import Conduit, Verbosity
 from rich.markdown import Markdown
 from rich.console import Console
 import sys
 
+logger = get_logger(__name__)
+
 # Constants
 DEFAULT_VERBOSITY = Verbosity.PROGRESS
-CACHE_FILE = Path(__file__).parent / ".twig_cache.sqlite"
-MESSAGE_STORE_HISTORY_FILE = Path(__file__).parent / ".twig_history.json"
-MESSAGE_STORE = MessageStore(history_file=MESSAGE_STORE_HISTORY_FILE, pruning=True)
-# Assign our singletons
-Conduit._message_store = MESSAGE_STORE
-Model._conduit_cache = ConduitCache(db_path=CACHE_FILE)
 
 
 class HandlerMixin:
     def _validate_handlers(self):
+        logger.debug("Validating handlers...")
         self.config: dict  # TwigCLI has self.config (generated from ConfigLoader)
         for command in self.config["commands"]:
             handler_name = command.get("handler")
@@ -42,7 +37,6 @@ class HandlerMixin:
         """
         Prints formatted markdown to the console.
         """
-
         # Create a Markdown object
         border = "-" * 100
         markdown_string = f"{border}\n{markdown_string}\n\n{border}"
@@ -54,6 +48,7 @@ class HandlerMixin:
         """
         Attempt to grab image from clipboard; return tuple of mime_type and base64.
         """
+        logger.info("Attempting to grab image from clipboard...")
         import os
 
         if "SSH_CLIENT" in os.environ or "SSH_TTY" in os.environ:
@@ -86,6 +81,7 @@ class HandlerMixin:
     def create_image_message(
         self, combined_query: str, mime_type: str, image_content: str
     ) -> "ImageMessage | None":
+        logger.info("Creating ImageMessage...")
         if not image_content or not mime_type:
             return
         role = "user"
@@ -106,13 +102,15 @@ class HandlerMixin:
         """
         View message history and exit.
         """
-        Conduit._message_store.view_history()
+        logger.info("Viewing message history...")
+        Conduit.message_store.view_history()
         sys.exit()
 
     def handle_wipe(self):
         """
         Clear the message history after user confirmation.
         """
+        logger.info("Wiping message history...")
         from rich.prompt import Confirm
 
         confirm = Confirm.ask(
@@ -120,7 +118,7 @@ class HandlerMixin:
             default=False,
         )
         if confirm:
-            Conduit._message_store.clear()
+            Conduit.message_store.clear()
             self.console.print("[green]Message history wiped.[/green]")
         else:
             self.console.print("[yellow]Wipe cancelled.[/yellow]")
@@ -132,10 +130,11 @@ class HandlerMixin:
         """
         Print the last message in the message store and exit.
         """
+        logger.info("Viewing last message...")
         import sys
 
         # Get last message
-        last_message = Conduit._message_store.last()
+        last_message = Conduit.message_store.last()
         # If no messages, inform user
         if not last_message:
             self.console.print("[red]No messages in history.[/red]")
@@ -159,12 +158,14 @@ class HandlerMixin:
         Maximal usage:
             `cat "some_document.md" | twig -q "Look at this doc." -a " Please summarize."`
         """
+        logger.info("Handling query...")
         # Type hints since mixins confuse IDEs
         self.flags: dict
         self.stdin: str
         self.verbosity: Verbosity
 
         # Assemble the parts of the query
+        logger.debug("Assembling query parts...")
         inputs = {
             "query_input": self.flags.get("query_input", ""),
             "context": f"<context>{self.stdin}</context>" if self.stdin else "",
@@ -172,6 +173,7 @@ class HandlerMixin:
         }
 
         # Grab our flags
+        logger.debug("Grabbing flags...")
         ## NOTE: we need to implement temperature, image, and other flags here.
         chat = self.flags["chat"]
         raw = self.flags["raw"]
@@ -183,6 +185,7 @@ class HandlerMixin:
             # Our switch logic
             match (chat, raw):
                 case (False, False):  # One-off request, pretty print
+                    logger.debug("One-off request, pretty print...")
                     response = self.query_function(
                         inputs,
                         preferred_model=preferred_model,
@@ -192,6 +195,7 @@ class HandlerMixin:
                     self.print_markdown(str(response.content))
                     sys.exit()
                 case (False, True):  # One-off request, raw print
+                    logger.debug("One-off request, raw print...")
                     response = self.query_function(
                         inputs,
                         preferred_model=preferred_model,
@@ -201,6 +205,7 @@ class HandlerMixin:
                     print(response)
                     sys.exit()
                 case (True, False):  # Chat (with history), pretty print
+                    logger.debug("Chat (with history), pretty print...")
                     response = self.query_function(
                         inputs,
                         preferred_model=preferred_model,
@@ -210,6 +215,7 @@ class HandlerMixin:
                     print(response)
                     sys.exit()
                 case (True, True):  # Chat (with history), raw print
+                    logger.debug("Chat (with history), raw print...")
                     response = self.query_function(
                         inputs,
                         preferred_model=preferred_model,
