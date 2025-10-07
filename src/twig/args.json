@@ -62,6 +62,17 @@
       "name": "--debug",
       "action": "store_true",
       "help": "Enable debug mode for verbose output."
+    },
+    {
+      "name": "--log",
+      "type": "str",
+      "choices": [
+        "i",
+        "d",
+        "e"
+      ],
+      "help": "Set the logging level",
+      "default": "info"
     }
   ],
   "commands": [
