@@ -21,7 +21,7 @@ class QueryFunctionProtocol(Protocol):
         self,
         inputs: dict[str, str],
         preferred_model: str,
-        nopersist: bool,
+        include_history: bool,
         verbose: Verbosity = Verbosity.PROGRESS,
     ) -> Response: ...
 
@@ -30,7 +30,7 @@ class QueryFunctionProtocol(Protocol):
 def default_query_function(
     inputs: dict[str, str],
     preferred_model: str,
-    nopersist: bool,
+    include_history: bool,
     verbose: Verbosity = Verbosity.PROGRESS,
 ) -> Response:
     """
@@ -53,6 +53,6 @@ def default_query_function(
     model = Model(preferred_model)
     prompt = Prompt(combined_query)
     conduit = Conduit(prompt=prompt, model=model)
-    response = conduit.run(verbose=verbose, nopersist=nopersist)
+    response = conduit.run(verbose=verbose, include_history=include_history)
     assert isinstance(response, Response), "Response is not of type Response"
     return response

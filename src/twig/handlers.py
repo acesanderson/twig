@@ -184,33 +184,12 @@ class HandlerMixin:
         ):
             # Our switch logic
             match (chat, raw):
-                case (False, False):  # One-off request, pretty print
-                    logger.debug("One-off request, pretty print...")
-                    response = self.query_function(
-                        inputs,
-                        preferred_model=preferred_model,
-                        verbose=self.verbosity,
-                        nopersist=True,
-                    )
-                    self.print_markdown(str(response.content))
-                    sys.exit()
-                case (False, True):  # One-off request, raw print
-                    logger.debug("One-off request, raw print...")
-                    response = self.query_function(
-                        inputs,
-                        preferred_model=preferred_model,
-                        verbose=self.verbosity,
-                        nopersist=True,
-                    )
-                    print(response)
-                    sys.exit()
                 case (True, False):  # Chat (with history), pretty print
                     logger.debug("Chat (with history), pretty print...")
                     response = self.query_function(
                         inputs,
                         preferred_model=preferred_model,
                         verbose=self.verbosity,
-                        nopersist=False,
                     )
                     print(response)
                     sys.exit()
@@ -220,7 +199,26 @@ class HandlerMixin:
                         inputs,
                         preferred_model=preferred_model,
                         verbose=self.verbosity,
-                        nopersist=False,
+                    )
+                    print(response)
+                    sys.exit()
+                case (False, False):  # One-off request, pretty print
+                    logger.debug("One-off request, pretty print...")
+                    response = self.query_function(
+                        inputs,
+                        preferred_model=preferred_model,
+                        verbose=self.verbosity,
+                        include_history=False,
+                    )
+                    self.print_markdown(str(response.content))
+                    sys.exit()
+                case (False, True):  # One-off request, raw print
+                    logger.debug("One-off request, raw print...")
+                    response = self.query_function(
+                        inputs,
+                        preferred_model=preferred_model,
+                        verbose=self.verbosity,
+                        include_history=False,
                     )
                     print(response)
                     sys.exit()
