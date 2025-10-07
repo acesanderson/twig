@@ -5,6 +5,9 @@ Define your own for customization.
 
 from conduit.sync import Prompt, Model, Conduit, Response, Verbosity
 from typing import Protocol, runtime_checkable
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # First, our protocol
@@ -35,6 +38,7 @@ def default_query_function(
     Note that the input dict will contain keys for all possible inputs, from the positional query, piped in context, and a potential "append" string.
     The simplest query functions will likely only want query_input.
     """
+    logger.debug("Running default_query_function...")
     # Extract inputs from dict
     query_input: str = inputs.get("query_input", "")
     context: str = (

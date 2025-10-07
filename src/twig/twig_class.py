@@ -13,12 +13,14 @@ This allows you to tailor the behavior of Twig while leveraging its existing fea
 from rich.console import Console
 from argparse import ArgumentParser, Namespace
 from twig.config_loader import ConfigLoader
-from twig.logs.logging_config import configure_logging
 from twig.handlers import HandlerMixin
 from twig.query_function import QueryFunctionProtocol, default_query_function
 from conduit.progress.verbosity import Verbosity
 from pathlib import Path
 import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Defaults
 DEFAULT_NAME = "twig"
@@ -68,9 +70,6 @@ class Twig(HandlerMixin):
         cache: bool = DEFAULT_CACHE_SETTING,
         persistent: bool = DEFAULT_PERSISTENT_SETTING,
     ):
-        # Set log level up front
-        self.logger = configure_logging(level=30)  # WARNING
-        self.logger.info("Initializing TwigCLI")
         # Parameters
         self.name: str = name  # Name of the CLI application
         self.description: str = description  # description of the CLI application
@@ -95,7 +94,7 @@ class Twig(HandlerMixin):
         )
         # Persistence
         if persistent:
-            self.logger.info(f"Using persistent history at {self.history_file}")
+            logger.info(f"Using persistent history at {self.history_file}")
             from conduit.message.messagestore import MessageStore
             from conduit.sync import Conduit
 
@@ -103,17 +102,17 @@ class Twig(HandlerMixin):
             message_store = MessageStore(history_file=self.history_file)
             Conduit.message_store = message_store
         else:
-            self.logger.info("Using in-memory history (no persistence)")
+            logger.info("Using in-memory history (no persistence)")
         # Cache
         if cache:
-            self.logger.info(f"Using cache at {self.cache_file}")
+            logger.info(f"Using cache at {self.cache_file}")
             from conduit.sync import Model
             from conduit.cache.cache import ConduitCache
 
             self.cache_file.parent.mkdir(parents=True, exist_ok=True)
             Model.conduit_cache = ConduitCache(db_path=self.cache_file)
         else:
-            self.logger.info("Caching disabled")
+            logger.info("Caching disabled")
         # Set up config
         self.attr_mapping: dict = {}
         self.command_mapping: dict = {}
@@ -127,7 +126,9 @@ class Twig(HandlerMixin):
         """
         Run the CLI application.
         """
-        self.logger.info("Running TwigCLI")
+        self._preconfigure_logging()  # Set log level early
+        # Logging begins
+        logger.info("Running TwigCLI")
         self.stdin: str = self._get_stdin()  # capture stdin if piped
         # Setup parser and parse args
         self.parser = self._setup_parser()
@@ -137,6 +138,35 @@ class Twig(HandlerMixin):
             sys.exit(1)
         # Parse args
         self._parse_args()
+
+    def _preconfigure_logging(self):
+        """Quick arg scan to set log level before full parsing."""
+        root = logging.getLogger()
+
+        # If already configured (library usage), respect existing config
+        if root.handlers:
+            logger.debug("Logging already configured, using existing setup")
+            return
+
+        # Determine level from CLI args or use default
+        level = logging.WARNING  # default
+
+        if "--log" in sys.argv:
+            idx = sys.argv.index("--log")
+            if idx + 1 < len(sys.argv):
+                log_flag = sys.argv[idx + 1].lower()
+                levels = {"d": logging.DEBUG, "i": logging.INFO, "w": logging.WARNING}
+                level = levels.get(log_flag, logging.WARNING)
+
+        # Configure once with the correct level
+        logging.basicConfig(
+            level=level,
+            format="%(asctime)s [%(levelname)s] %(name)s:%(lineno)d (%(funcName)s) - %(message)s",
+            stream=sys.stderr,
+        )
+
+        # Silence noisy third-party libraries (like markdown_it)
+        logging.getLogger("markdown_it").setLevel(logging.WARNING)
 
     def _construct_xdg_paths(self) -> tuple[Path, Path, Path]:
         """
@@ -177,14 +207,14 @@ class Twig(HandlerMixin):
         """
         Setup the argument parser based on the configuration.
         """
-        self.logger.info("Setting up argument parser")
+        logger.info("Setting up argument parser")
         parser = ArgumentParser()
         parser.description = self.description
         self.attr_mapping = {}
         self.command_mapping = {}
 
         # Handle positional args (i.e. query string if provided)
-        self.logger.info("Adding positional arguments to parser")
+        logger.info("Adding positional arguments to parser")
         for pos_arg in self.config.get("positional_args", []):
             dest = pos_arg.pop("dest")
             self.attr_mapping[dest] = dest
@@ -194,7 +224,7 @@ class Twig(HandlerMixin):
             )
 
         # Handle flags
-        self.logger.info("Adding flags to parser")
+        logger.info("Adding flags to parser")
         for flag in self.config["flags"]:
             abbrev = flag.pop("abbrev", None)
             name = flag.pop("name")
@@ -205,7 +235,7 @@ class Twig(HandlerMixin):
             parser.add_argument(*args, **flag)
 
         # Handle commands
-        self.logger.info("Adding commands to parser")
+        logger.info("Adding commands to parser")
         command_group = parser.add_mutually_exclusive_group()
         for command in self.config["commands"]:
             handler = command.pop("handler")
@@ -223,32 +253,22 @@ class Twig(HandlerMixin):
         """
         Parse arguments and execute commands or prepare for query processing.
         """
-        self.logger.info("Parsing arguments")
+        logger.info("Parsing arguments")
         self.args = self.parser.parse_args()
-        self.logger.debug(f"Parsed args: {self.args}")
+        logger.debug(f"Parsed args: {self.args}")
 
         # Create flags dictionary
-        self.logger.info("Creating flags dictionary")
+        logger.info("Creating flags dictionary")
         self.flags = {}
         for arg_name, attr_name in self.attr_mapping.items():
             if hasattr(self.args, arg_name):
                 self.flags[attr_name] = getattr(self.args, arg_name)
 
-        # Set logging if requested
-        if self.flags.get("log"):
-            match self.flags["log"].lower():
-                case "d":
-                    self.logger.setLevel(10)  # DEBUG
-                case "i":
-                    self.logger.setLevel(20)  # INFO
-                case "w":
-                    self.logger.setLevel(30)  # WARNING
-
         # Coerce query input to string if necessary
         self.flags["query_input"] = self._coerce_query_input(self.flags["query_input"])
 
         # Check if any commands were specified and execute them
-        self.logger.info("Checking for commands to execute")
+        logger.info("Checking for commands to execute")
         for arg_name, handler_name in self.command_mapping.items():
             if getattr(self.args, arg_name, False):
                 handler = getattr(self, handler_name)
@@ -259,7 +279,7 @@ class Twig(HandlerMixin):
                 return
 
         # If no commands were executed and we have query input, process it
-        self.logger.info("No commands executed; checking for query input")
+        logger.info("No commands executed; checking for query input")
         if self.args.query_input:
             self.query_handler()
 
@@ -268,7 +288,7 @@ class Twig(HandlerMixin):
         """
         Debugging method to print all attributes of the instance.
         """
-        self.logger.info("Printing all attributes of the instance")
+        logger.info("Printing all attributes of the instance")
         if pretty:
             from rich.pretty import Pretty
 
@@ -283,7 +303,7 @@ class Twig(HandlerMixin):
         """
         Given a command-line argument name, return the corresponding handler method.
         """
-        self.logger.info(f"Getting handler for command: {command_name}")
+        logger.info(f"Getting handler for command: {command_name}")
         handler_name = self.command_mapping.get(command_name)
         if handler_name and hasattr(self, handler_name):
             return getattr(self, handler_name)

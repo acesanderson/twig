@@ -5,13 +5,13 @@ Some guidelines for this Mixin:
 - the method names must match the handler names in the config file exactly, a la "handle_history", "handle_wipe", etc.
 """
 
-from twig.logs.logging_config import get_logger
 from conduit.sync import Conduit, Verbosity
 from rich.markdown import Markdown
 from rich.console import Console
+import logging
 import sys
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 # Constants
 DEFAULT_VERBOSITY = Verbosity.PROGRESS

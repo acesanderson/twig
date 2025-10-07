@@ -9,6 +9,16 @@
   ],
   "flags": [
     {
+      "name": "--log",
+      "type": "str",
+      "choices": [
+        "d",
+        "i",
+        "w"
+      ],
+      "help": "Set the logging level: d (debug), i (info), w (warning)"
+    },
+    {
       "abbrev": "-m",
       "name": "--model",
       "type": "str",
@@ -62,17 +72,6 @@
       "name": "--debug",
       "action": "store_true",
       "help": "Enable debug mode for verbose output."
-    },
-    {
-      "name": "--log",
-      "type": "str",
-      "choices": [
-        "i",
-        "d",
-        "e"
-      ],
-      "help": "Set the logging level",
-      "default": "info"
     }
   ],
   "commands": [
