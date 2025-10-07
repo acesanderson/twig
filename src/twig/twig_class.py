@@ -165,8 +165,9 @@ class Twig(HandlerMixin):
             stream=sys.stderr,
         )
 
-        # Silence noisy third-party libraries (like markdown_it)
-        logging.getLogger("markdown_it").setLevel(logging.WARNING)
+        # Silence noisy libraries
+        for lib in ["markdown_it", "urllib3", "httpx", "httpcore"]:
+            logging.getLogger(lib).setLevel(logging.WARNING)
 
     def _construct_xdg_paths(self) -> tuple[Path, Path, Path]:
         """
