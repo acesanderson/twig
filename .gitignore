@@ -14,3 +14,4 @@ Twig.egg-info/
 *.json
 !args.json
 .twig_history.json
+uv.lock
