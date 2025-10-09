@@ -1,210 +1,187 @@
 # Twig
 
-[![Python](https://img.shields.io/badge/python-3.7+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+A command-line interface for LLM interactions built on top of the Conduit framework. Twig provides POSIX-style interaction patterns with pipes, redirection, and persistent message history.
 
-**A lightweight command-line interface for querying LLMs with powerful piping and context injection capabilities.**
+## Project Purpose
 
-Twig transforms the Chain framework into a flexible CLI tool that lets you seamlessly integrate AI queries into your terminal workflow. Pipe data, compose complex prompts, and get intelligent responses without leaving your command line.
+Twig is a CLI wrapper around the Conduit LLM framework that enables terminal-based LLM queries with support for piped input, persistent conversation history, caching, and customizable query handlers. It follows POSIX conventions for composability with standard Unix tools while providing features like message archival, image input from clipboard, and flexible model selection.
 
-## Quick Start
+## Architecture Overview
+
+- **Twig**: Main CLI application class that orchestrates argument parsing, configuration loading, and command execution. Manages persistence, caching, and XDG-compliant file paths.
+- **HandlerMixin**: Provides command handlers for history management, query processing, and utility operations. Implements validation logic to ensure all configured handlers exist.
+- **ConfigLoader**: Loads and deserializes CLI configuration from JSON, rehydrating type annotations for argument parsing.
+- **QueryFunctionProtocol**: Protocol defining the signature for query functions. Enables custom query implementations while maintaining interface compatibility.
+- **default_query_function**: Default implementation that combines query input, piped context, and append strings into LLM prompts via Conduit.
+- **twig_factory**: Factory function to wrap simple query functions into full Twig instances with minimal configuration.
+
+## Dependencies
+
+Major dependencies (inferred from imports):
+- **conduit**: Core LLM framework providing Model, Response, Prompt, MessageStore, and caching infrastructure (appears to be a local/internal dependency)
+- **rich**: Terminal formatting and progress indicators
+- **xdg-base-dirs**: XDG Base Directory specification compliance
+- **Pillow (PIL)**: Image processing for clipboard operations
+- **argparse**: Command-line argument parsing (standard library)
+
+## API Documentation
+
+### Twig Class
+
+```python
+class Twig(HandlerMixin):
+    def __init__(
+        self,
+        name: str = "twig",
+        description: str = "Twig: The LLM CLI",
+        query_function: QueryFunctionProtocol = default_query_function,
+        verbosity: Verbosity = Verbosity.COMPLETE,
+        preferred_model: str = "claude",
+        console: Console = Console(),
+        cache: bool = True,
+        persistent: bool = True,
+    )
+```
+
+Main CLI application class. Instantiate with custom parameters to modify behavior.
+
+**Key Parameters:**
+- `query_function`: Custom query handler matching QueryFunctionProtocol
+- `preferred_model`: Default LLM model identifier
+- `cache`: Enable/disable response caching
+- `persistent`: Enable/disable message history persistence
+
+**Methods:**
+- `run()`: Execute the CLI application with parsed arguments
+
+### twig_factory
+
+```python
+def twig_factory(query_function) -> Twig
+```
+
+Factory function to create Twig instances from simple query functions. Wraps functions that only accept `query_input` and return `Response` objects.
+
+**Parameters:**
+- `query_function`: Function accepting query string and returning Response
+
+**Returns:** Configured Twig instance
+
+### default_query_function
+
+```python
+def default_query_function(
+    inputs: dict[str, str],
+    preferred_model: str,
+    include_history: bool,
+    verbose: Verbosity = Verbosity.PROGRESS,
+) -> Response
+```
+
+Default query implementation combining query input, piped context, and append strings.
+
+**Parameters:**
+- `inputs`: Dictionary with keys "query_input", "context", "append"
+- `preferred_model`: Model identifier string
+- `include_history`: Whether to include message history in query
+- `verbose`: Verbosity level for output
+
+**Returns:** Response object from Conduit framework
+
+### QueryFunctionProtocol
+
+Protocol defining the required signature for custom query functions:
+
+```python
+class QueryFunctionProtocol(Protocol):
+    def __call__(
+        self,
+        inputs: dict[str, str],
+        preferred_model: str,
+        include_history: bool,
+        verbose: Verbosity = Verbosity.PROGRESS,
+    ) -> Response: ...
+```
+
+## Usage Examples
+
+### Basic CLI Usage
 
 ```bash
-# Install
-pip install -e .
-
 # Simple query
-twig "Explain this error message"
+twig "What is the capital of France?"
 
-# Pipe content for context
-cat error.log | twig "What's wrong with this code?"
+# Query with piped context
+cat document.md | twig "Summarize this document"
 
-# Advanced prompt composition
-echo "$(cat myfile.py)" | twig "Review this code" -a "Focus on performance issues" -m claude
+# Chat mode with history
+twig --chat "Continue our previous conversation"
+
+# View message history
+twig --history
+
+# Use specific model
+twig --model gpt-4 "Explain quantum computing"
 ```
 
-## Key Features
+### Programmatic Usage with Default Configuration
 
-- **🔄 Seamless Piping**: Pipe any content directly into your prompts as context
-- **🧩 Flexible Prompt Structure**: Compose prompts with head, context, and tail components  
-- **💬 Multiple Interaction Modes**: One-shot queries, persistent chat, or interactive shell
-- **🖼️ Image Support**: Include clipboard images in your queries
-- **📚 Conversation History**: Automatic message storage and retrieval
-- **🎯 Model Selection**: Easy switching between different LLM providers
-- **⚡ Rich Output**: Beautiful markdown formatting with syntax highlighting
+```python
+from twig.twig_class import Twig
 
-## Installation
-
-### Prerequisites
-- Python 3.7+
-- Chain framework (dependency)
-- Rich library for enhanced terminal output
-
-### Install
-```bash
-git clone <repository-url>
-cd twig
-pip install -e .
+# Create and run CLI with defaults
+twig = Twig()
+twig.run()
 ```
 
-## Core Usage Patterns
+### Custom Query Function with Factory
 
-### Basic Query
-```bash
-twig "What is machine learning?"
+```python
+from twig.twig_factory import twig_factory
+from conduit.sync import Model, Prompt, Conduit, Response
+
+def custom_query(query_input: str) -> Response:
+    """Custom handler that adds system instructions."""
+    model = Model("claude")
+    enhanced_prompt = f"Be concise. {query_input}"
+    prompt = Prompt(enhanced_prompt)
+    conduit = Conduit(prompt=prompt, model=model)
+    return conduit.run()
+
+# Create custom Twig instance
+custom_twig = twig_factory(custom_query)
+custom_twig.run()
 ```
 
-### Pipe Content as Context
-```bash
-# Debug code
-cat script.py | twig "Find bugs in this code"
+### Advanced Customization
 
-# Analyze logs  
-tail -f app.log | twig "Summarize recent errors"
+```python
+from twig.twig_class import Twig
+from conduit.sync import Response, Verbosity
 
-# Process data
-curl api.example.com/data | twig "Extract key insights"
+def specialized_query(
+    inputs: dict[str, str],
+    preferred_model: str,
+    include_history: bool,
+    verbose: Verbosity = Verbosity.PROGRESS,
+) -> Response:
+    """Specialized query handler with custom logic."""
+    query = inputs.get("query_input", "")
+    # Custom preprocessing
+    processed_query = f"SPECIALIZED: {query}"
+    # Use Conduit framework for actual query
+    from conduit.sync import Model, Prompt, Conduit
+    model = Model(preferred_model)
+    conduit = Conduit(prompt=Prompt(processed_query), model=model)
+    return conduit.run(verbose=verbose, include_history=include_history)
+
+# Instantiate with custom configuration
+twig = Twig(
+    query_function=specialized_query,
+    preferred_model="gpt-4",
+    cache=True,
+    persistent=True,
+    verbosity=Verbosity.COMPLETE
+)
+twig.run()
 ```
-
-### Prompt Composition Structure
-Twig builds prompts in three parts:
-```
-<query>        # Your main question
-<context>      # Piped content (stdin)  
-<append>       # Additional instructions (-a flag)
-```
-
-### Advanced Example
-```bash
-echo "$(cat chain.py)" | \
-twig "Review this Python module" \
--a "Focus on error handling and suggest improvements" \
--m "gpt-4" \
--c
-```
-
-## Command Reference
-
-### Core Options
-- `twig "query"` - Basic query
-- `-m, --model MODEL` - Select specific model
-- `-c, --chat` - Include conversation history  
-- `-s, --shell` - Interactive chat mode
-- `-a, --append TEXT` - Append to prompt
-
-### Input/Output
-- `-i, --image` - Include clipboard image
-- `-r, --raw` - Raw text output (no markdown)
-- `-p, --print_input` - Show constructed prompt
-
-### History Management  
-- `-l, --last` - Show last response
-- `-hi, --history` - View conversation history
-- `-g, --get N` - Get specific message by index
-- `-cl, --clear` - Clear history
-
-### Model Options
-- `-o, --ollama` - Use local Llama model
-- `-li, --list` - List available models  
-- `-t, --temperature N` - Set response randomness
-
-## Real-World Examples
-
-### Code Review Workflow
-```bash
-# Get comprehensive code analysis
-echo "# $(basename $PWD)\n$(find . -name '*.py' -exec cat {} \;)" | \
-twig "Analyze this Python project" \
--a "Check for security issues, performance problems, and suggest architectural improvements"
-```
-
-### Log Analysis
-```bash
-# Continuous monitoring
-tail -f /var/log/app.log | twig "Monitor for anomalies and alert on issues"
-
-# Error investigation  
-grep ERROR app.log | twig "Categorize these errors and suggest fixes"
-```
-
-### Documentation Generation
-```bash
-# Generate README from code
-cat main.py | twig "Create documentation for this script" -a "Include usage examples"
-```
-
-### Data Processing
-```bash
-# Analyze CSV data
-cat sales_data.csv | twig "What trends do you see in this sales data?" -a "Provide actionable insights"
-```
-
-## Interactive Modes
-
-### Shell Mode
-```bash
-twig -s  # Enter interactive chat
-```
-
-### Chat Mode
-```bash
-# Maintain conversation context across queries
-twig "Explain quantum computing" -c
-twig "How does it relate to cryptography?" -c  # References previous exchange
-```
-
-## Configuration
-
-Twig stores configuration and history in:
-- `.history.pickle` - Conversation history
-- `.twig_log.txt` - Query logs
-
-Default model: `claude` (configurable in `preferred_model` variable)
-
-## Integration Examples
-
-### Git Workflow
-```bash
-# Commit message generation
-git diff --cached | twig "Generate a commit message for these changes"
-
-# Code review
-git show HEAD | twig "Review this commit" -a "Check for potential issues"
-```
-
-### System Administration  
-```bash
-# Performance analysis
-ps aux | twig "Identify resource-intensive processes"
-
-# Configuration review
-cat nginx.conf | twig "Optimize this Nginx configuration"
-```
-
-## Troubleshooting
-
-**Image paste not working**: Image clipboard functionality requires a desktop environment and is disabled over SSH.
-
-**Slow startup**: The loading spinner indicates Chain framework imports are in progress.
-
-**Model not found**: Use `twig -li` to see available models.
-
-## Development
-
-Built on the [Chain framework](link-to-chain-repo) for LLM interactions. Requires Chain to be installed and configured with your API keys.
-
-### Project Structure
-```
-twig/
-├── twig.py          # Main CLI implementation
-├── setup.py         # Package configuration  
-└── README.md        # This file
-```
-
-## License
-
-MIT License - see LICENSE file for details.
-
----
-
-**Pro Tip**: Combine twig with standard Unix tools for powerful AI-assisted workflows. The ability to pipe any content as context makes it incredibly versatile for code analysis, log processing, and data interpretation tasks.
