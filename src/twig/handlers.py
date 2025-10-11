@@ -190,8 +190,9 @@ class HandlerMixin:
                         inputs,
                         preferred_model=preferred_model,
                         verbose=self.verbosity,
+                        include_history=True,
                     )
-                    print(response)
+                    self.print_markdown(str(response.content))
                     sys.exit()
                 case (True, True):  # Chat (with history), raw print
                     logger.debug("Chat (with history), raw print...")
@@ -199,6 +200,7 @@ class HandlerMixin:
                         inputs,
                         preferred_model=preferred_model,
                         verbose=self.verbosity,
+                        include_history=True,
                     )
                     print(response)
                     sys.exit()
